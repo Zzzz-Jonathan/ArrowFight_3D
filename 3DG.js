@@ -1,5 +1,5 @@
 var mapSize = [1000,1000,1000], cameraSize = 10000, keyCode = [];//
-var scene = [], destination = [], camera = [], renderer = [];
+var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [];
 
 function Env(scene,destination,camera,renderer){
     this.init = function(){
@@ -44,9 +44,34 @@ function Env(scene,destination,camera,renderer){
         document.body.appendChild(renderer[0].domElement); //body元素中插入canvas对象
     }
     this.fresh = function(){
-        destination[0].position.set(Math.random()*mapSize[0],Math.random()*mapSize[1],Math.random()*mapSize[2])
+        destinationPhysic[0].position.set(Math.random()*mapSize[0],Math.random()*mapSize[1],Math.random()*mapSize[2])
         //在10000的范围内随机移动了destination
-        console.log(destination[0].position);
+        console.log(destination[0]);
+    }
+}
+function Physic(phyWorld,destinationPhysic){
+    this.init = function (){
+        var world_new = new CANNON.World();
+        phyWorld.push(world_new);
+        phyWorld[0].gravity.set(0, 0, 0);
+        //创建物理世界
+        destinationPhysic_new = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
+            mass: 0, //刚体的质量，这里单位为kg
+            position: new CANNON.Vec3(destination[0].position.x, destination[0].position.y, destination[0].position.z), //刚体的位置，单位是米
+            shape: new CANNON.Box(new CANNON.Vec3(100, 100, 100)), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
+            material: new CANNON.Material({friction: 0.05, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
+        });
+        destinationPhysic.push(destinationPhysic_new);
+        phyWorld[0].addBody(destinationPhysic[0]);
+        //创建物理destination
+    }
+    this.freshPhysic = function (){
+        var timeStep = 1.0 / 60.0;
+        phyWorld[0].step(timeStep);
+
+        destination[0].position.copy(destinationPhysic[0].position);
+        destination[0].quaternion.copy(destinationPhysic[0].quaternion);//更新终点
+        console.log(destinationPhysic[0].position);
     }
 }
 function render(){
@@ -74,7 +99,7 @@ function keyMotion(){
         camera[0].rotateZ(0.01);
     }//按下E
 }
-function arriveDestination(env){
+function arriveDestination(env,physic){
     if(Math.abs(camera[0].position.x - destination[0].position.x) < 50 ){
         if(Math.abs(camera[0].position.y - destination[0].position.y) < 50 ){
             if(Math.abs(camera[0].position.z - destination[0].position.z) < 50 ){
@@ -82,4 +107,5 @@ function arriveDestination(env){
             }
         }
     }
+    physic.freshPhysic();
 }

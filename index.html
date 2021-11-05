@@ -13,6 +13,7 @@
   </style>
   <!--引入three.js三维引擎-->
   <script src="./three.js"></script>
+  <script src="./cannon.js"></script>
   <script src="./3DG.js"></script>
   <!-- <script src="http://www.yanhuangxueyuan.com/threejs/build/three.js"></script> -->
 </head>
@@ -20,8 +21,11 @@
 <body>
   <script>
     var env = new Env(scene,destination,camera,renderer);
+    var physic = new Physic(phyWorld,destinationPhysic);
     env.init();
+    physic.init();
     env.fresh();
+    physic.freshPhysic();
     render();
 
     document.addEventListener('mousedown', function(){
@@ -40,7 +44,7 @@
       keyCode[event.keyCode] = false;
     }
 
-    setInterval("arriveDestination(env)",10);
+    setInterval("arriveDestination(env,physic)",10);
   </script>
 </body>
 
