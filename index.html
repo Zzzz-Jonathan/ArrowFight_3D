@@ -14,18 +14,21 @@
   <!--引入three.js三维引擎-->
   <script src="./three.js"></script>
   <script src="./cannon.js"></script>
+  <script src="./OBJLoader.js"></script>
+  <script src="MTLLoader.js"></script>
+  <script src="Water2.js"></script>
   <script src="./3DG.js"></script>
   <!-- <script src="http://www.yanhuangxueyuan.com/threejs/build/three.js"></script> -->
 </head>
 
 <body>
   <script>
-    var env = new Env(scene,destination,camera,renderer);
-    var physic = new Physic(phyWorld,destinationPhysic);
+    var env = new Env(scene,destination,camera,renderer,timeCloud,player,rocket);
+    var physic = new Physic(phyWorld,destinationPhysic,playerPhysic);
     env.init();
     physic.init();
-    env.fresh();
     physic.freshPhysic();
+    env.fresh();
     render();
 
     document.addEventListener('mousedown', function(){
@@ -33,8 +36,10 @@
     });
     document.body.addEventListener('mousemove',function(event){
       if (document.pointerLockElement === document.body){
-          camera[0].rotateY(event.movementX/500);
-          camera[0].rotateX(event.movementY/500);
+        player[0].rotateY(-1*event.movementX/500);
+        camera[0].rotateY(-1*event.movementX/500);
+        player[0].rotateX(-1*event.movementY/500);
+        camera[0].rotateX(-1*event.movementY/500);
         }
     });
     document.onkeydown=function(event){
@@ -45,6 +50,10 @@
     }
 
     setInterval("arriveDestination(env,physic)",10);
+    setInterval(function (){
+      //physic.freshPhysic();
+      //console.log(rocket[0]);
+    },1000);
   </script>
 </body>
 
