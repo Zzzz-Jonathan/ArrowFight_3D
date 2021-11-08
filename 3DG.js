@@ -1,5 +1,5 @@
 var mapSize = [3000,3000,3000], cameraSize = 10000, keyCode = [];//
-var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], player = [], playerPhysic = [], rocket = [];
+var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [];
 
 function Env(scene,destination,camera,renderer,timeCloud,player,rocket){
     this.init = function(){
@@ -19,12 +19,12 @@ function Env(scene,destination,camera,renderer,timeCloud,player,rocket){
         destination.push(this.destinationCube());
         scene[0].add(destination[0]);
         //终点的网格模型添加到场景中
-        var axesHelper = new THREE.AxesHelper(250);
+        var axesHelper = new THREE.AxesHelper(30);
         scene[0].add(axesHelper);//辅助坐标系添加到场景中
         //至此，创建了sence，destination和axeshelper
         player.push(this.setPlayer());
         scene[0].add(player[0]);
-        player[0].position.set(mapSize[0]*0.5,mapSize[1]*0.5,mapSize[2]*0.5);
+        player[0].position.set(0,0,0);
         //创建了player
         var camera_new = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 1, cameraSize);
         camera.push(camera_new);
@@ -41,7 +41,7 @@ function Env(scene,destination,camera,renderer,timeCloud,player,rocket){
         scene[0].add(ambient);
         //设置环境光
         var point = new THREE.PointLight(0xffffff, 5, 0);
-        point.position.set(mapSize[0]*0.5,mapSize[1]*0.5,mapSize[2]*0.5); //点光源位置
+        point.position.set(0,0,0); //点光源位置
         point.visible = true;
         scene[0].add(point);
         //点光源添加到场景中
@@ -166,7 +166,7 @@ function Env(scene,destination,camera,renderer,timeCloud,player,rocket){
     this.genRocket = function ([x,y,z]){
         var geometry = new THREE.SphereGeometry(5, 40, 40);
         var material = new THREE.MeshLambertMaterial({
-            color: 0xffffff
+            color: 0xffff00
         });
         mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
         mesh.position.set(x,y,z);
@@ -177,13 +177,13 @@ function Env(scene,destination,camera,renderer,timeCloud,player,rocket){
         var width = window.innerWidth, height = window.innerHeight; //窗口高度
         renderer[0].setSize(width, height);//设置渲染区域尺寸
         renderer[0].setClearColor(0x000000, 1); //设置背景颜色
-        document.body.appendChild(renderer[0].domElement); //body元素中插入canvas对象
+        document.getElementById("game").appendChild(renderer[0].domElement); //body元素中插入canvas对象
     }
     this.fresh = function(){
-        destinationPhysic[0].position.set(Math.random()*mapSize[0],Math.random()*mapSize[1],Math.random()*mapSize[2]);
+        destinationPhysic[0].position.set(Math.random()*mapSize[0]-0.5*mapSize[0],Math.random()*mapSize[1]-0.5*mapSize[1],Math.random()*mapSize[2]-0.5*mapSize[2]);
         //在map的范围内随机移动了destination
         for(var i = 0; i < timeCloud.length; i++){
-            timeCloud[i].position.set(Math.random()*mapSize[0],Math.random()*mapSize[1],Math.random()*mapSize[2]);
+            timeCloud[i].position.set(Math.random()*mapSize[0]-0.5*mapSize[0],Math.random()*mapSize[1]-0.5*mapSize[1],Math.random()*mapSize[2]-0.5*mapSize[2]);
         }
         for(i = 0; i < rocket.length; i++){
             var rd = randomRocket();
@@ -197,7 +197,9 @@ function Env(scene,destination,camera,renderer,timeCloud,player,rocket){
         var material = new THREE.MeshPhongMaterial({
             color: 0xffffff
         });
-        return new THREE.Mesh(geometry, material); //网格模型对象Mesh
+        mesh = new THREE.Mesh(geometry, material);
+        mesh.castShadow = true;
+        return  mesh;//网格模型对象Mesh
     }
     this.timeCloud = function (){
         var OBJLoader = new THREE.OBJLoader();//obj加载器
@@ -222,13 +224,117 @@ function Env(scene,destination,camera,renderer,timeCloud,player,rocket){
                     timeCloud[i].material.opacity = 0.75;
                     timeCloud[i].material.transparent = true;
                     timeCloud[i].position.set(Math.random()*mapSize[0],Math.random()*mapSize[1],Math.random()*mapSize[2]);
+                    timeCloud[i].receiveShadow = true;
                     scene[0].add(timeCloud[i]);//返回的组对象插入场景中
-                    //console.log(timeCloud[i]);
+                    console.log(timeCloud[i]);
                 }
             })
         })
     }
 }
+function MiniMap(scene,destination,player,renderer,camera,timeCloudMap){
+    this.init = function (){
+        this.miniMapSize = [100,100,100];
+        var map = new THREE.Scene();
+        scene.push(map);
+        // var geometry = new THREE.SphereGeometry(60, 40, 40); //创建一个球体几何对象
+        var geometry1 = new THREE.BoxGeometry(10, 10, 10); //创建一个立方体几何对象Geometry
+        var material1 = new THREE.MeshLambertMaterial({
+            color: 0xff0000
+        }); //材质对象Material
+        var geometry3 = new THREE.BoxGeometry(this.miniMapSize[0], this.miniMapSize[1], this.miniMapSize[2]); //创建一个立方体几何对象Geometry
+        const C3 = geometry3.attributes.position.clone();
+        // Faces will be colored by vertex colors
+        geometry3.setAttribute('color', C3);
+        const material3 = new THREE.MeshBasicMaterial({
+            wireframe:true,
+            vertexColors: THREE.VertexColors
+        });
+        var geometry2 = new THREE.SphereGeometry(8, 10, 10);
+        var material2 = new THREE.MeshLambertMaterial({
+            color: 0x00ff00
+        }); //材质对象Material
+        var destination_map = new THREE.Mesh(geometry1, material1); //网格模型对象Mesh
+        destination.push(destination_map);
+        var player_map = new THREE.Mesh(geometry2, material2);
+        player.push(player_map);
+        var box_map = new THREE.Mesh(geometry3, material3);
+        this.arrow = new THREE.ArrowHelper(new THREE.Vector3(0,0,1).normalize(),new THREE.Vector3(0,0,0).normalize(), 25,0xffff00,10,10);
+        //console.log(this.arrow);
+        //console.log(timeCloud.length);
+        scene[1].add(player[1]);
+        scene[1].add(destination[1]); //网格模型添加到场景中
+        scene[1].add(box_map);
+        scene[1].add(this.arrow);
+        //点光源
+        var point = new THREE.PointLight(0xffffff);
+        point.position.set(0, 0, 0); //点光源位置
+        scene[1].add(point); //点光源添加到场景中
+        //环境光
+        var ambient = new THREE.AmbientLight(0xffffff);
+        scene[1].add(ambient);
+
+        var axesHelper = new THREE.AxesHelper(20);
+        scene[1].add(axesHelper);
+
+        var width = 250, height = 250; //窗口高度
+        var k = width / height; //窗口宽高比
+        var s = 150; //三维场景显示范围控制系数，系数越大，显示的范围越大
+        //创建相机对象
+        var camera_map = new THREE.OrthographicCamera(-s * k, s * k, s, -s, 1, 500);
+        camera.push(camera_map);
+        camera[1].position.set(0, 0, 0); //设置相机位置
+
+        var renderer_map = new THREE.WebGLRenderer({alpha: true});
+        renderer_map.setSize(width, height);//设置渲染区域尺寸
+        renderer_map.setClearColor(0x000000, 0); //设置背景颜色
+        document.getElementById("map").appendChild(renderer_map.domElement); //body元素中插入canvas对象
+        //执行渲染操作   指定场景、相机作为参数
+        renderer.push(renderer_map);
+    }
+    this.fresh = function (){
+        var length = 150;
+        var mdx = ((destination[0].position.x)/mapSize[0])*this.miniMapSize[0], mdy = ((destination[0].position.y)/mapSize[1])*this.miniMapSize[1], mdz = ((destination[0].position.z)/mapSize[2])*this.miniMapSize[2];
+        var mpx = ((player[0].position.x)/mapSize[0])*this.miniMapSize[0], mpy = ((player[0].position.y)/mapSize[1])*this.miniMapSize[1], mpz = ((player[0].position.z)/mapSize[2])*this.miniMapSize[2];
+
+        var dx = player[0].position.x, dy = player[0].position.y, dz = player[0].position.z;
+        var lx = ((dx*dx)/(dx*dx+dz*dz))*length, lz = ((dz*dz)/(dx*dx+dz*dz))*length,ly = 0.7*length;
+        if(dx < 0){lx = -lx;}
+        if(dy < 0){ly = -ly;}
+        if(dz < 0){lz = -lz;}
+
+        var pLocal = new THREE.Vector3(0, 0, -1);
+        var pWorld = pLocal.applyMatrix4(camera[0].matrixWorld);
+        var dir = pWorld.sub(camera[0].position).normalize();
+        if(keyCode[87]){
+            dir.x = -1*dir.x;
+            dir.y = -1*dir.y;
+            dir.z = -1*dir.z;
+        }
+        //console.log(dir);
+
+        player[1].position.set(mpx,mpy,mpz);
+        //this.arrow.rotateX(0.01);
+        this.arrow.setDirection(dir);
+        //console.log(this.arrow.rotation.x,camera[0].rotation.x);
+        //this.arrow.quaternion.copy(camera[0].quaternion);
+        this.arrow.position.copy(player[1].position);
+        destination[1].position.set(mdx,mdy,mdz);
+        camera[1].position.set(lx,ly,lz);
+        //console.log(camera[1].position);
+        camera[1].lookAt(new THREE.Vector3(0,0,0));
+    }
+}
+window.onresize=function(){
+    // 重置渲染器输出画布canvas尺寸
+    renderer[0].setSize(window.innerWidth,window.innerHeight);
+    // 全屏情况下：设置观察范围长宽比aspect为窗口宽高比
+    camera[0].aspect = window.innerWidth/window.innerHeight;
+    // 渲染器执行render方法的时候会读取相机对象的投影矩阵属性projectionMatrix
+    // 但是不会每渲染一帧，就通过相机的属性计算投影矩阵(节约计算资源)
+    // 如果相机的一些属性发生了变化，需要执行updateProjectionMatrix ()方法更新相机的投影矩阵
+    camera[0].updateProjectionMatrix ();
+};
 function randomRocket(){
     var max = 1500, min = 400;
     var length = (max - min)*Math.random()+min;
@@ -237,7 +343,7 @@ function randomRocket(){
     if(Math.random() < 0.5){rx = -rx;}
     if(Math.random() < 0.5){ry = -ry;}
     if(Math.random() < 0.5){rz = -rz;}
-    console.log(rx,ry,rz);
+    //console.log(rx,ry,rz);
     var lx = length*rx+camera[0].position.x, ly = length*ry+camera[0].position.y, lz = length*rz+camera[0].position.z;
 
     return [lx,ly,lz];
@@ -296,6 +402,7 @@ function Physic(phyWorld,destinationPhysic,playerPhysic){
 function render(){
     requestAnimationFrame(render);
     renderer[0].render(scene[0],camera[0]);//执行渲染操作
+    renderer[1].render(scene[1],camera[1]);
     keyMotion();
     rocketMove();
 }
@@ -330,7 +437,7 @@ function keyMotion(){
     //camera[0].lookAt(player[0].position);
     //camera[0].translateY(500);
 }
-function arriveDestination(env,physic){
+function arriveDestination(env,physic,map){
     if(Math.abs(player[0].position.x - destination[0].position.x) < 50 ){
         if(Math.abs(player[0].position.y - destination[0].position.y) < 50 ){
             if(Math.abs(player[0].position.z - destination[0].position.z) < 50 ){
@@ -338,5 +445,6 @@ function arriveDestination(env,physic){
             }
         }
     }
+    map.fresh();
     physic.freshPhysic();
 }

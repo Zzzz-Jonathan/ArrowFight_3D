@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>学习素材</title>
+  <title>ArrowFight 3D</title>
   <style>
     body {
       margin: 0;
@@ -22,13 +22,18 @@
 </head>
 
 <body>
+  <div id="game">
+    <div id="map" style="position: absolute;bottom: 0"></div>
+  </div>
   <script>
     var env = new Env(scene,destination,camera,renderer,timeCloud,player,rocket);
     var physic = new Physic(phyWorld,destinationPhysic,playerPhysic);
+    var map = new MiniMap(scene,destination,player,renderer,camera,timeCloudMap);
     env.init();
     physic.init();
     physic.freshPhysic();
     env.fresh();
+    map.init();
     render();
 
     document.addEventListener('mousedown', function(){
@@ -49,10 +54,10 @@
       keyCode[event.keyCode] = false;
     }
 
-    setInterval("arriveDestination(env,physic)",10);
+    setInterval("arriveDestination(env,physic,map)",10);
     setInterval(function (){
       //physic.freshPhysic();
-      //console.log(rocket[0]);
+      //console.log(timeCloud);
     },1000);
   </script>
 </body>
