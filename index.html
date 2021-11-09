@@ -11,6 +11,7 @@
       /* 隐藏body窗口区域滚动条 */
     }
   </style>
+  <link rel="stylesheet" type="text/css" href="ui.css">
   <!--引入three.js三维引擎-->
   <script src="./three.js"></script>
   <script src="./cannon.js"></script>
@@ -24,6 +25,11 @@
 <body>
   <div id="game">
     <div id="map" style="position: absolute;bottom: 0"></div>
+    <svg id="svg" width="240" height="240" version="1.1" xmlns="http://www.w3.org/2000/svg">
+      <circle r="110" cx="120" cy="120" fill="transparent" stroke="rgba(100,100,100,0.3)" stroke-width="20px" stroke-dasharray="172.7,172.7" stroke-dashoffset="86.35"></circle>
+      <circle r="101" cx="120" cy="120" fill="transparent" stroke="rgba(100,100,100,0.3)" stroke-width="2px" stroke-dasharray="640.56" stroke-dashoffset="0"></circle>
+      <circle id="energy" r="110" cx="120" cy="120" fill="transparent" stroke-dashoffset="0"></circle>
+    </svg>
   </div>
   <script>
     var env = new Env(scene,destination,camera,renderer,timeCloud,player,rocket);

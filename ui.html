@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UI</title>
+<!--    <script src="./jquery-3.6.0.js"></script>-->
+    <link rel="stylesheet" type="text/css" href="ui.css">
+</head>
+<body>
+    <div>
+        <svg id="svg" width="240" height="240" version="1.1" xmlns="http://www.w3.org/2000/svg">
+            <circle r="110" cx="120" cy="120" fill="transparent" stroke="rgba(10,10,10,0.3)" stroke-width="20px" stroke-dasharray="172.7,172.7" stroke-dashoffset="86.35"></circle>
+            <circle r="101" cx="120" cy="120" fill="transparent" stroke="rgba(10,10,10,0.3)" stroke-width="2px" stroke-dasharray="640.56" stroke-dashoffset="0"></circle>
+            <circle id="energy" r="110" cx="120" cy="120" fill="transparent" stroke-dashoffset="0"></circle>
+        </svg>
+    </div>
+    <script>
+        // document.getElementById("percent").addEventListener('change', function(){
+        //     var val = parseInt(document.getElementById("percent").value);
+        //     var $circle = document.getElementById("bar");
+        //
+        //     if (isNaN(val)) {
+        //         val = 100;
+        //     }
+        //     else{
+        //         var r = $circle.getAttribute('r');
+        //         var c = Math.PI*(r*2);
+        //
+        //         if (val < 0) { val = 0;}
+        //         if (val > 100) { val = 100;}
+        //
+        //         var pct = ((100-val)/100)*c;
+        //
+        //         $circle.setAttribute('style','stroke-dashoffset:pct');
+        //         console.log(pct);
+        //         document.getElementById("cont").getAttribute('data-pct',val);
+        //     }
+        // });
+    </script>
+</body>
+</html>

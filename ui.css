@@ -1,0 +1,12 @@
+#energy {
+    /*transition: stroke-dashoffset 1s linear;*/
+    stroke: rgba(255,255,0,0.7);
+    stroke-width: 20px;
+    stroke-dasharray: 172.7,1000;
+    transform: rotate(135deg);
+    transform-origin: center center;
+}
+#svg {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+    margin: auto;
+}

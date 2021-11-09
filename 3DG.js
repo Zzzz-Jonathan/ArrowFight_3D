@@ -1,4 +1,4 @@
-var mapSize = [3000,3000,3000], cameraSize = 10000, keyCode = [];//
+var mapSize = [3000,3000,3000], cameraSize = 10000, keyCode = [], moveEnergy = 100;//
 var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [];
 
 function Env(scene,destination,camera,renderer,timeCloud,player,rocket){
@@ -351,7 +351,7 @@ function randomRocket(){
 function rocketMove(){
     for(var i = 0; i < rocket.length; i++){
         var dx = player[0].position.x - rocket[i].position.x, dy = player[0].position.y - rocket[i].position.y, dz = player[0].position.z - rocket[i].position.z;
-        var dist = Math.sqrt(dx*dx+dy*dy+dz*dz), velocity = 2.5;
+        var dist = Math.sqrt(dx*dx+dy*dy+dz*dz), velocity = 4;
         var rx = (dx*dx)/(dx*dx+dy*dy+dz*dz), ry = (dy*dy)/(dx*dx+dy*dy+dz*dz),rz = (dz*dz)/(dx*dx+dy*dy+dz*dz);
         if(dx < 0){rx = -rx;}
         if(dy < 0){ry = -ry;}
@@ -405,31 +405,42 @@ function render(){
     renderer[1].render(scene[1],camera[1]);
     keyMotion();
     rocketMove();
+    var pct = 172.7 - (moveEnergy/100)*172.7;
+    //console.log(document.getElementById("energy"));
+    document.getElementById("energy").setAttribute('stroke-dashoffset',pct);
 }
 function keyMotion(){
-    if(keyCode[87] == true){
-        player[0].translateZ(-3);
+    if(keyCode[87]){
+        if(keyCode[32] && (moveEnergy >= 0)){
+            player[0].translateZ(-6);
+            moveEnergy = moveEnergy - 0.7;
+        }
+        else {
+            player[0].translateZ(-3);
+        }
     }//按下W
-    if(keyCode[83] == true){
+    if(keyCode[83]){
         player[0].translateZ(1);
     }//按下S
-    if(keyCode[65] == true){
+    if(keyCode[65]){
         player[0].translateX(-1);
     }//按下A
-    if(keyCode[68] == true){
+    if(keyCode[68]){
         player[0].translateX(1);
     }//按下D
-    if(keyCode[81] == true){
+    if(keyCode[81]){
         player[0].rotateZ(-0.01);
         camera[0].rotateZ(-0.01);
         // console.log(player[0]);
         // console.log(camera[0]);
     }//按下Q
-    if(keyCode[69] == true){
+    if(keyCode[69]){
         player[0].rotateZ(0.01);
         camera[0].rotateZ(0.01);
     }//按下E
-
+    if((moveEnergy < 100) && !keyCode[32]){
+        moveEnergy = moveEnergy + 0.5;
+    }
     camera[0].position.x = player[0].position.x;
     camera[0].position.y = player[0].position.y;
     camera[0].position.z = player[0].position.z;
