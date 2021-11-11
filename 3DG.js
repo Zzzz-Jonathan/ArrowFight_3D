@@ -1,5 +1,5 @@
-var mapSize = [3000,3000,3000], cameraSize = 10000, keyCode = [], moveEnergy = 100;//
-var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [];
+var mapSize = [3000,3000,3000], cameraSize = 10000, keyCode = [], moveEnergy = 100, mouseClickTime = 0;//
+var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], bullet = new Array(), bulletPhysics = new Array();
 
 function Env(scene,destination,camera,renderer,timeCloud,player,rocket){
     this.init = function(){
@@ -226,10 +226,14 @@ function Env(scene,destination,camera,renderer,timeCloud,player,rocket){
                     timeCloud[i].position.set(Math.random()*mapSize[0],Math.random()*mapSize[1],Math.random()*mapSize[2]);
                     timeCloud[i].receiveShadow = true;
                     scene[0].add(timeCloud[i]);//返回的组对象插入场景中
-                    console.log(timeCloud[i]);
+                    //console.log(timeCloud[i]);
                 }
             })
         })
+    }
+    this.playerShoot = function(t){
+        var po = player[0].position, ro = player[0].rotation;
+        Bullet(po.x, po.y, po.z, ro.x, ro.y, ro.z, t);
     }
 }
 function MiniMap(scene,destination,player,renderer,camera,timeCloudMap){
@@ -325,16 +329,45 @@ function MiniMap(scene,destination,player,renderer,camera,timeCloudMap){
         camera[1].lookAt(new THREE.Vector3(0,0,0));
     }
 }
-window.onresize=function(){
-    // 重置渲染器输出画布canvas尺寸
-    renderer[0].setSize(window.innerWidth,window.innerHeight);
-    // 全屏情况下：设置观察范围长宽比aspect为窗口宽高比
-    camera[0].aspect = window.innerWidth/window.innerHeight;
-    // 渲染器执行render方法的时候会读取相机对象的投影矩阵属性projectionMatrix
-    // 但是不会每渲染一帧，就通过相机的属性计算投影矩阵(节约计算资源)
-    // 如果相机的一些属性发生了变化，需要执行updateProjectionMatrix ()方法更新相机的投影矩阵
-    camera[0].updateProjectionMatrix ();
-};
+function Bullet(x, y, z, l, m, n, t){
+    var vset = 15, tset = 10;
+    var geometry = new THREE.CylinderGeometry(1, 5, 10, 10);
+    var material = new THREE.MeshPhongMaterial({
+        color: 0xffffff
+    });
+    mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
+    mesh.position.set(x,y,z);
+    //生成bullet图像，并初始化位置
+
+    body = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
+        mass: 10, //刚体的质量，这里单位为kg
+        position: new CANNON.Vec3(x, y, z), //刚体的位置，单位是米
+        shape: new CANNON.Cylinder(1, 5, 10, 10), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
+        material: new CANNON.Material({friction: 0.01, restitution: 0}), //材质数据，里面规定了摩擦系数和弹性系数
+        velocity: new CANNON.Vec3(vset*l, vset*m, vset*n)
+    });
+    
+    bullet.push(mesh);
+    bulletPhysics.push(body);
+    scene[0].add(mesh);
+    phyWorld[0].addBody(body);
+
+    if((tset*t)/1000 <20){
+        tset = tset*t;
+    }
+    else{
+        tset = 20000;
+    }
+
+    setTimeout(function(){
+        bullet.shift();
+        bulletPhysics.shift();
+        scene[0].remove(mesh);
+        mesh.material.dispose();
+        mesh.geometry.dispose();
+        phyWorld[0].removeBody(body);
+    },tset);
+}
 function randomRocket(){
     var max = 1500, min = 400;
     var length = (max - min)*Math.random()+min;
@@ -370,7 +403,7 @@ function Physic(phyWorld,destinationPhysic,playerPhysic){
         phyWorld.push(world_new);
         phyWorld[0].gravity.set(0, 0, 0);
         //创建物理世界
-        destinationPhysic_new = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
+        var destinationPhysic_new = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
             mass: 0, //刚体的质量，这里单位为kg
             position: new CANNON.Vec3(destination[0].position.x, destination[0].position.y, destination[0].position.z), //刚体的位置，单位是米
             shape: new CANNON.Box(new CANNON.Vec3(100, 100, 100)), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
@@ -379,7 +412,7 @@ function Physic(phyWorld,destinationPhysic,playerPhysic){
         destinationPhysic.push(destinationPhysic_new);
         phyWorld[0].addBody(destinationPhysic[0]);
         //创建物理destination
-        player_new = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
+        var player_new = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
             mass: 0, //刚体的质量，这里单位为kg
             position: new CANNON.Vec3(player[0].position.x, player[0].position.y, player[0].position.z), //刚体的位置，单位是米
             shape: new CANNON.Sphere(30),
@@ -396,6 +429,11 @@ function Physic(phyWorld,destinationPhysic,playerPhysic){
         destination[0].quaternion.copy(destinationPhysic[0].quaternion);//更新终点
         playerPhysic[0].position.copy(player[0].position);
         playerPhysic[0].quaternion.copy(player[0].quaternion);//更新playerPhysic
+
+        for(var i = 0; i < bullet.length; i++){
+            bullet[i].position.copy(bulletPhysics[i].position);
+            bullet[i].quaternion.copy(bulletPhysics[i].position);
+        }
         //console.log(destinationPhysic[0].position);
     }
 }
@@ -403,11 +441,6 @@ function render(){
     requestAnimationFrame(render);
     renderer[0].render(scene[0],camera[0]);//执行渲染操作
     renderer[1].render(scene[1],camera[1]);
-    keyMotion();
-    rocketMove();
-    var pct = 172.7 - (moveEnergy/100)*172.7;
-    //console.log(document.getElementById("energy"));
-    document.getElementById("energy").setAttribute('stroke-dashoffset',pct);
 }
 function keyMotion(){
     if(keyCode[87]){
@@ -454,7 +487,7 @@ function keyMotion(){
     //camera[0].lookAt(player[0].position);
     //camera[0].translateY(500);
 }
-function arriveDestination(env,physic,map){
+function arriveDestination(env){
     if(Math.abs(player[0].position.x - destination[0].position.x) < 50 ){
         if(Math.abs(player[0].position.y - destination[0].position.y) < 50 ){
             if(Math.abs(player[0].position.z - destination[0].position.z) < 50 ){
@@ -462,6 +495,14 @@ function arriveDestination(env,physic,map){
             }
         }
     }
+}
+function freshAll(env,physic,map){
+    keyMotion();
+    rocketMove();
+    arriveDestination(env);
     map.fresh();
     physic.freshPhysic();
+    var pct = 172.7 - (moveEnergy/100)*172.7;
+    //console.log(document.getElementById("energy"));
+    document.getElementById("energy").setAttribute('stroke-dashoffset',pct);
 }
