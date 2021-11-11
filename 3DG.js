@@ -438,9 +438,15 @@ function keyMotion(){
         player[0].rotateZ(0.01);
         camera[0].rotateZ(0.01);
     }//按下E
-    if((moveEnergy < 100) && !keyCode[32]){
+    if(keyCode[82]){
+        player[0].rotation.z = 0;
+        camera[0].rotation.z = 0;
+    }//按下R
+
+    if((moveEnergy < 100) && (!keyCode[32] || !keyCode[87])){
         moveEnergy = moveEnergy + 0.5;
     }
+
     camera[0].position.x = player[0].position.x;
     camera[0].position.y = player[0].position.y;
     camera[0].position.z = player[0].position.z;
