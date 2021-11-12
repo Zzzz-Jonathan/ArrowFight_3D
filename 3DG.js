@@ -232,8 +232,11 @@ function Env(scene,destination,camera,renderer,timeCloud,player,rocket){
         })
     }
     this.playerShoot = function(t){
-        var po = player[0].position, ro = player[0].rotation;
-        Bullet(po.x, po.y, po.z, ro.x, ro.y, ro.z, t);
+        var po = player[0].position.clone(), ro = new THREE.Vector3();
+        camera[0].getWorldDirection(ro);
+        po.add(ro.multiplyScalar(50));
+        //console.log(player[0].position, po)
+        Bullet(po, ro, t);
     }
 }
 function MiniMap(scene,destination,player,renderer,camera,timeCloudMap){
@@ -307,14 +310,16 @@ function MiniMap(scene,destination,player,renderer,camera,timeCloudMap){
         if(dy < 0){ly = -ly;}
         if(dz < 0){lz = -lz;}
 
-        var pLocal = new THREE.Vector3(0, 0, -1);
-        var pWorld = pLocal.applyMatrix4(camera[0].matrixWorld);
-        var dir = pWorld.sub(camera[0].position).normalize();
-        if(keyCode[87]){
-            dir.x = -1*dir.x;
-            dir.y = -1*dir.y;
-            dir.z = -1*dir.z;
-        }
+        // var pLocal = new THREE.Vector3(0, 0, -1);
+        // var pWorld = pLocal.applyMatrix4(camera[0].matrixWorld);
+        // var dir = pWorld.sub(camera[0].position).normalize();
+        // if(keyCode[87]){
+        //     dir.x = -1*dir.x;
+        //     dir.y = -1*dir.y;
+        //     dir.z = -1*dir.z;
+        // }
+        var dir = new THREE.Vector3();
+        camera[0].getWorldDirection(dir);
         //console.log(dir);
 
         player[1].position.set(mpx,mpy,mpz);
@@ -329,28 +334,36 @@ function MiniMap(scene,destination,player,renderer,camera,timeCloudMap){
         camera[1].lookAt(new THREE.Vector3(0,0,0));
     }
 }
-function Bullet(x, y, z, l, m, n, t){
-    var vset = 15, tset = 10;
+function Bullet(position, direction, t){
+    var vset = 20, tset = 10;
     var geometry = new THREE.CylinderGeometry(1, 5, 10, 10);
-    var material = new THREE.MeshPhongMaterial({
-        color: 0xffffff
+    var material = new THREE.MeshLambertMaterial({
+        color: 0xffff00
     });
-    mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
-    mesh.position.set(x,y,z);
+    bullet_new = new THREE.Mesh(geometry, material); //网格模型对象Mesh
+    bullet_new.position.set(position.x, position.y, position.z);
+    //bullet_new.name = 'bullet';
     //生成bullet图像，并初始化位置
 
     body = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
         mass: 10, //刚体的质量，这里单位为kg
-        position: new CANNON.Vec3(x, y, z), //刚体的位置，单位是米
+        position: new CANNON.Vec3(position.x, position.y, position.z), //刚体的位置，单位是米
         shape: new CANNON.Cylinder(1, 5, 10, 10), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
         material: new CANNON.Material({friction: 0.01, restitution: 0}), //材质数据，里面规定了摩擦系数和弹性系数
-        velocity: new CANNON.Vec3(vset*l, vset*m, vset*n)
     });
-    
-    bullet.push(mesh);
-    bulletPhysics.push(body);
-    scene[0].add(mesh);
+    //console.log(body)
+    //body.quaternion.copy(direction);
+    // body.quaternion.set(direction.x, direction.y, direction.z, 1);
+    // body.quaternion.normalize();
+    // body.quaternion.z = body.quaternion.z - Math.PI/2;
+    body.quaternion.setFromAxisAngle(direction.x, direction.y);
+    body.quaternion.normalize();
+    body.velocity.copy(direction.multiplyScalar(vset));
+
+    scene[0].add(bullet_new);
     phyWorld[0].addBody(body);
+    bullet.push(bullet_new);
+    bulletPhysics.push(body);
 
     if((tset*t)/1000 <20){
         tset = tset*t;
@@ -360,12 +373,12 @@ function Bullet(x, y, z, l, m, n, t){
     }
 
     setTimeout(function(){
-        bullet.shift();
-        bulletPhysics.shift();
-        scene[0].remove(mesh);
-        mesh.material.dispose();
-        mesh.geometry.dispose();
-        phyWorld[0].removeBody(body);
+        outBullet = bullet.shift();
+        outBulletBody = bulletPhysics.shift();
+        scene[0].remove(outBullet);
+        outBullet.material.dispose();
+        outBullet.geometry.dispose();
+        phyWorld[0].removeBody(outBulletBody);
     },tset);
 }
 function randomRocket(){
@@ -404,7 +417,7 @@ function Physic(phyWorld,destinationPhysic,playerPhysic){
         phyWorld[0].gravity.set(0, 0, 0);
         //创建物理世界
         var destinationPhysic_new = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
-            mass: 0, //刚体的质量，这里单位为kg
+            mass: 10, //刚体的质量，这里单位为kg
             position: new CANNON.Vec3(destination[0].position.x, destination[0].position.y, destination[0].position.z), //刚体的位置，单位是米
             shape: new CANNON.Box(new CANNON.Vec3(100, 100, 100)), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
             material: new CANNON.Material({friction: 0.05, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
@@ -422,7 +435,7 @@ function Physic(phyWorld,destinationPhysic,playerPhysic){
         phyWorld[0].addBody(playerPhysic[0]);
     }
     this.freshPhysic = function (){
-        var timeStep = 1.0 / 60.0;
+        var timeStep = 1.0 / 100.0;
         phyWorld[0].step(timeStep);
 
         destination[0].position.copy(destinationPhysic[0].position);
@@ -432,7 +445,7 @@ function Physic(phyWorld,destinationPhysic,playerPhysic){
 
         for(var i = 0; i < bullet.length; i++){
             bullet[i].position.copy(bulletPhysics[i].position);
-            bullet[i].quaternion.copy(bulletPhysics[i].position);
+            bullet[i].quaternion.copy(bulletPhysics[i].quaternion);
         }
         //console.log(destinationPhysic[0].position);
     }
