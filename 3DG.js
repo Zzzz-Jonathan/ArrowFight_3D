@@ -223,7 +223,8 @@ function Env(scene,destination,camera,renderer,timeCloud,player,rocket){
                     timeCloud[i].material.color.set(0x999999);
                     timeCloud[i].material.opacity = 0.75;
                     timeCloud[i].material.transparent = true;
-                    timeCloud[i].position.set(Math.random()*mapSize[0],Math.random()*mapSize[1],Math.random()*mapSize[2]);
+                    var pos = freshInMap();
+                    timeCloud[i].position.set(pos[0], pos[1], pos[2]);
                     timeCloud[i].receiveShadow = true;
                     scene[0].add(timeCloud[i]);//返回的组对象插入场景中
                     //console.log(timeCloud[i]);
@@ -239,7 +240,38 @@ function Env(scene,destination,camera,renderer,timeCloud,player,rocket){
         Bullet(po, ro, t);
     }
 }
-function MiniMap(scene,destination,player,renderer,camera,timeCloudMap){
+function freshInMap(){
+    var x = Math.random()*mapSize[0]-0.5*mapSize[0], y = Math.random()*mapSize[1]-0.5*mapSize[1], z = Math.random()*mapSize[2]-0.5*mapSize[2];
+    return [x, y, z];
+}
+function limitInBox(object){
+    var x = object.position.x, y = object.position.y, z = object.position.z;
+    if(Math.abs(x) > mapSize[0]/2){
+        if(x > 0) {
+            object.position.x = -1*mapSize[0]/2;
+        }
+        else {
+            object.position.x = mapSize[0]/2;
+        }
+    }
+    if(Math.abs(y) > mapSize[1]/2){
+        if(y > 0) {
+            object.position.y = -1*mapSize[1]/2;
+        }
+        else {
+            object.position.y = mapSize[1]/2;
+        }
+    }
+    if(Math.abs(z) > mapSize[2]/2){
+        if(z > 0) {
+            object.position.z = -1*mapSize[2]/2;
+        }
+        else {
+            object.position.z = mapSize[2]/2;
+        }
+    }
+}
+function MiniMap(scene, destination, player, renderer, camera, timeCloudMap){
     this.init = function (){
         this.miniMapSize = [100,100,100];
         var map = new THREE.Scene();
@@ -335,10 +367,10 @@ function MiniMap(scene,destination,player,renderer,camera,timeCloudMap){
     }
 }
 function Bullet(position, direction, t){
-    var vset = 20, tset = 10;
-    var geometry = new THREE.CylinderGeometry(1, 5, 10, 10);
+    var vset = 20, tset = 10000;
+    var geometry = new THREE.CylinderGeometry(1, 5, 10, 30);
     var material = new THREE.MeshLambertMaterial({
-        color: 0xffff00
+        color: 0xffffff
     });
     bullet_new = new THREE.Mesh(geometry, material); //网格模型对象Mesh
     bullet_new.position.set(position.x, position.y, position.z);
@@ -348,16 +380,23 @@ function Bullet(position, direction, t){
     body = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
         mass: 10, //刚体的质量，这里单位为kg
         position: new CANNON.Vec3(position.x, position.y, position.z), //刚体的位置，单位是米
-        shape: new CANNON.Cylinder(1, 5, 10, 10), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
+        shape: new CANNON.Cylinder(1, 5, 10, 10),
         material: new CANNON.Material({friction: 0.01, restitution: 0}), //材质数据，里面规定了摩擦系数和弹性系数
     });
+
+    var dir_camera = new THREE.Quaternion();
+    camera[0].getWorldQuaternion(dir_camera);
+    var rot = new THREE.Quaternion();
+    rot.setFromAxisAngle(new THREE.Vector3(-1,0,0), Math.PI/2);
+    dir_camera.multiply(rot);
     //console.log(body)
     //body.quaternion.copy(direction);
-    // body.quaternion.set(direction.x, direction.y, direction.z, 1);
+    body.quaternion.copy(dir_camera);
+    bullet_new.quaternion.copy(dir_camera);
+    //body.quaternion.normalize();
+    //body.quaternion.z = body.quaternion.z - Math.PI/2;
+    // body.quaternion.setFromAxisAngle(direction.x, direction.y);
     // body.quaternion.normalize();
-    // body.quaternion.z = body.quaternion.z - Math.PI/2;
-    body.quaternion.setFromAxisAngle(direction.x, direction.y);
-    body.quaternion.normalize();
     body.velocity.copy(direction.multiplyScalar(vset));
 
     scene[0].add(bullet_new);
@@ -365,12 +404,12 @@ function Bullet(position, direction, t){
     bullet.push(bullet_new);
     bulletPhysics.push(body);
 
-    if((tset*t)/1000 <20){
-        tset = tset*t;
-    }
-    else{
-        tset = 20000;
-    }
+    // if((tset*t)/1000 <20){
+    //     tset = tset*t;
+    // }
+    // else{
+    //     tset = 20000;
+    // }
 
     setTimeout(function(){
         outBullet = bullet.shift();
@@ -410,7 +449,7 @@ function rocketMove(){
         }
     }
 }
-function Physic(phyWorld,destinationPhysic,playerPhysic){
+function Physic(phyWorld, destinationPhysic, playerPhysic){
     this.init = function (){
         var world_new = new CANNON.World();
         phyWorld.push(world_new);
@@ -509,10 +548,11 @@ function arriveDestination(env){
         }
     }
 }
-function freshAll(env,physic,map){
+function freshAll(env, physic, map){
     keyMotion();
     rocketMove();
     arriveDestination(env);
+    limitInBox(destinationPhysic[0]);
     map.fresh();
     physic.freshPhysic();
     var pct = 172.7 - (moveEnergy/100)*172.7;

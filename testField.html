@@ -17,7 +17,7 @@
          * 创建网格模型
          */
             // var geometry = new THREE.SphereGeometry(60, 40, 40); //创建一个球体几何对象
-        var geometry = new THREE.BoxGeometry(100, 100, 100); //创建一个立方体几何对象Geometry
+        var geometry = new THREE.CylinderGeometry(10, 50, 100, 100);
         var material = new THREE.MeshLambertMaterial({
             color: 0x0000ff
         }); //材质对象Material
@@ -44,7 +44,7 @@
         var s = 200; //三维场景显示范围控制系数，系数越大，显示的范围越大
         //创建相机对象
         var camera = new THREE.OrthographicCamera(-s * k, s * k, s, -s, 1, 1000);
-        camera.position.set(200, 300, 200); //设置相机位置
+        camera.position.set(300, 300, 300); //设置相机位置
         camera.lookAt(scene.position); //设置相机方向(指向的场景对象)
         /**
          * 创建渲染器对象
@@ -61,12 +61,32 @@
         destinationPhysic_new = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
             mass: 10, //刚体的质量，这里单位为kg
             position: new CANNON.Vec3(0,0,0), //刚体的位置，单位是米
-            shape: new CANNON.Box(new CANNON.Vec3(100, 100, 100)), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
+            shape: new CANNON.Cylinder(10, 50, 100, 100),
             material: new CANNON.Material({friction: 0.05, restitution: 0}), //材质数据，里面规定了摩擦系数和弹性系数
         });
         world_new.addBody(destinationPhysic_new);
         //console.log(destinationPhysic_new);
-        destinationPhysic_new.velocity.copy(new THREE.Vector3(10, 10, 10));
+        //destinationPhysic_new.velocity.copy(new THREE.Vector3(100, 100, 100));
+        var axesHelper = new THREE.AxesHelper(300);
+        scene.add(axesHelper);//辅助坐标系添加到场景中
+        //destinationPhysic_new.quaternion.normalize();
+        // var elu = new THREE.Vector3();
+        // camera.getWorldDirection(elu);
+        // var eluer = new THREE.Euler(elu.x, elu.y, elu.z)
+        // var dir = new THREE.Quaternion();
+        // dir.setFromEuler(eluer);
+
+        var dir = new THREE.Quaternion();
+        camera.getWorldQuaternion(dir);
+        var rot = new THREE.Quaternion();
+        rot.setFromAxisAngle(new THREE.Vector3(-1,0,0), Math.PI/2);
+        dir.multiply(rot);
+
+        destinationPhysic_new.quaternion.copy(dir);
+        //destinationPhysic_new.quaternion.setFromAxisAngle(new THREE.Vector3(1,0,0), Math.PI/2);
+
+        console.log(dir);
+        console.log(destinationPhysic_new.quaternion);
         setInterval(function (){
             renderer.render(scene, camera);
             var timeStep = 1 / 100;
