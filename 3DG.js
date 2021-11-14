@@ -487,7 +487,7 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
             bullet[i].position.copy(bulletPhysics[i].position);
             bullet[i].quaternion.copy(bulletPhysics[i].quaternion);
         }
-        for(var i = 0; i < rocket.length; i++){
+        for(i = 0; i < rocket.length; i++){
             // var dir = rocketPhysic[i].velocity;
             // var dir_v = new THREE.Quaternion();
             // dir_v.setFromEuler(new THREE.Euler(dir.x, dir.y, dir.z));
@@ -504,7 +504,7 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
         var p = player[0].position;
         var dir = new THREE.Vector3(p.x-x, p.y-y, p.z-z);
         dir = dir.normalize();
-        var geometry = new THREE.SphereGeometry(20,2,2);
+        var geometry = new THREE.OctahedronGeometry(20);
         //var geometry = new THREE.CylinderGeometry(1, 5, 30, 30);
         var material = new THREE.MeshPhongMaterial({
             color: 0xff5809,
@@ -515,11 +515,12 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
         mesh.position.set(x,y,z);
         rocket.push(mesh);
 
+        var Octahedron = OctahedronConvex();
+
         var body = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
-            mass: 10, //刚体的质量，这里单位为kg
+            mass: 20, //刚体的质量，这里单位为kg
             position: new CANNON.Vec3(x, y, z), //刚体的位置，单位是米
-            shape: new CANNON.Sphere(20,2,2),
-            //shape: new CANNON.Cylinder(1, 5, 30, 10),
+            shape: Octahedron,
             material: new CANNON.Material({friction: 0.05, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
         });
         rocketPhysic.push(body);
@@ -536,6 +537,27 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
         scene[0].add(mesh);
         phyWorld[0].addBody(body);
     }
+}
+function OctahedronConvex() {
+    let points = [
+        new CANNON.Vec3(20,0,0),
+        new CANNON.Vec3(-20,0,0),
+        new CANNON.Vec3(0,20,0),
+        new CANNON.Vec3(0,-20,0),
+        new CANNON.Vec3(0,0,20),
+        new CANNON.Vec3(0,0,-20)
+    ];
+    let faces = [
+        [0,4,3],
+        [0,3,5],
+        [0,2,4],
+        [0,5,2],
+        [1,3,4],
+        [1,5,3],
+        [1,4,2],
+        [1,2,5]
+    ];
+    return new CANNON.ConvexPolyhedron(points, faces);
 }
 function render(){
     requestAnimationFrame(render);
