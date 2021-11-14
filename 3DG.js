@@ -623,6 +623,8 @@ function goAim(object, aim, limitV, deltaV){
     var dir = dd[0], dist = dd[1];
     var vo = object.velocity;
     var v = Math.sqrt(vo.x*vo.x+vo.y*vo.y+vo.z*vo.z);
+    var dir_v = new THREE.Quaternion();
+    dir_v.setFromEuler(new THREE.Euler(dir.x, dir.y, -1*dir.z));
     //console.log(vo);
     if(v < limitV){
         object.velocity.x = object.velocity.x + dir.x*deltaV;
@@ -649,6 +651,8 @@ function goAim(object, aim, limitV, deltaV){
             object.velocity.z = object.velocity.z - Math.abs(dir.z*deltaV);
         }
     }
+    object.quaternion.copy(dir_v);
+    console.log(object.quaternion);
     return dist;
 }
 function freshUI(){
