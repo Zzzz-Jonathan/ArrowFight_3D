@@ -33,16 +33,19 @@
       <circle r="101" cx="120" cy="120" fill="transparent" stroke="rgba(100,100,100,0.3)" stroke-width="2px" stroke-dasharray="640.56" stroke-dashoffset="0"></circle>
       <circle id="energy" r="110" cx="120" cy="120" fill="transparent" stroke-dashoffset="0"></circle>
     </svg>
+    <h1 id="load">LOADING...</h1>
   </div>
   <script>
     var env = new Env(scene,destination,camera,renderer,timeCloud,player);
     var physic = new Physic(phyWorld,destinationPhysic,playerPhysic,rocket,rocketPhysic);
     var map = new MiniMap(scene,destination,player,renderer,camera,timeCloudMap);
+    
     env.init();
     physic.init();
+    map.init();
     physic.freshPhysic();
     env.fresh();
-    map.init();
+    
     render();
 
     document.addEventListener('mousedown', function(){
@@ -84,9 +87,20 @@
     };
 
     setInterval("freshAll(env,physic,map)",10);
+    checkLoad = setInterval(function () {
+      if(timeCloud.length < 6){
+        document.getElementById("load").style.display="block";
+      }
+      else{
+        document.getElementById("load").style.display="none";
+        loading = false;
+        clearInterval(checkLoad);
+      }
+    },100);
     setInterval(function () {
       //console.log(destinationPhysic[0].position);
       //console.log(destinationPhysic[0]);
+      console.log(loading);
     },1000);
   </script>
 </body>
