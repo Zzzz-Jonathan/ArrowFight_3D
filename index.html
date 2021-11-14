@@ -35,8 +35,8 @@
     </svg>
   </div>
   <script>
-    var env = new Env(scene,destination,camera,renderer,timeCloud,player,rocket);
-    var physic = new Physic(phyWorld,destinationPhysic,playerPhysic);
+    var env = new Env(scene,destination,camera,renderer,timeCloud,player);
+    var physic = new Physic(phyWorld,destinationPhysic,playerPhysic,rocket,rocketPhysic);
     var map = new MiniMap(scene,destination,player,renderer,camera,timeCloudMap);
     env.init();
     physic.init();
@@ -86,7 +86,7 @@
     setInterval("freshAll(env,physic,map)",10);
     setInterval(function () {
       //console.log(destinationPhysic[0].position);
-      console.log(destinationPhysic[0]);
+      //console.log(destinationPhysic[0]);
     },1000);
   </script>
 </body>
