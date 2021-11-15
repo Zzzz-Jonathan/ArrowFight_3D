@@ -46,7 +46,9 @@
     map.init();
     physic.freshPhysic();
     env.fresh();
-    
+
+    var move = new Move(), engine = new Engine(camera[0],playerPhysic[0]);
+    //engine.init();
     render();
 
     document.addEventListener('mousedown', function(){
@@ -111,8 +113,8 @@
       }
     },100);
     setInterval(function () {
-      //console.log(destinationPhysic[0].position);
-
+      //move.dirToAimRelative(camera[0],destinationPhysic[0]);
+      console.log(playerPhysic[0].velocity);
     },1000);
   </script>
 </body>
