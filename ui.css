@@ -5,7 +5,6 @@
     stroke-dasharray: 172.7,1000;
     transform: rotate(135deg);
     transform-origin: center center;
-    display: none;
 }
 #svg {
     position: absolute; left: 0; top: 0; right: 0; bottom: 0;
@@ -26,7 +25,7 @@
     -webkit-background-clip: text;
     /*背景裁剪为文本形式*/
     animation: ran 10s linear infinite;
-    display: none;
+    /*display: none;*/
 }
 @keyframes ran {
     from {
