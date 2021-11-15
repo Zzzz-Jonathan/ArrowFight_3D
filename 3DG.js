@@ -224,11 +224,13 @@ function Env(scene,destination,camera,renderer,timeCloud,player){
         })
     }
     this.playerShoot = function(t){
-        var po = player[0].position.clone(), ro = new THREE.Vector3();
-        camera[0].getWorldDirection(ro);
-        po.add(ro.multiplyScalar(50));
-        //console.log(player[0].position, po)
-        Bullet(po, ro, t);
+        if(!loading){
+            var po = player[0].position.clone(), ro = new THREE.Vector3();
+            camera[0].getWorldDirection(ro);
+            po.add(ro.multiplyScalar(50));
+            //console.log(player[0].position, po)
+            Bullet(po, ro, t);
+        }
     }
 }
 function freshInMap(){
@@ -372,9 +374,10 @@ function Bullet(position, direction, t){
         mass: 10, //刚体的质量，这里单位为kg
         position: new CANNON.Vec3(position.x, position.y, position.z), //刚体的位置，单位是米
         shape: new CANNON.Cylinder(1, 5, 10, 10),
-        material: new CANNON.Material({friction: 0.01, restitution: 0}), //材质数据，里面规定了摩擦系数和弹性系数
+        material: new CANNON.Material({friction: 0.01, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
     });
-
+    body.name = "bullet";
+    //console.log(body.name);
     var dir_camera = new THREE.Quaternion();
     camera[0].getWorldQuaternion(dir_camera);
     var rot = new THREE.Quaternion();
@@ -470,7 +473,7 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
         });
         playerPhysic.push(player_new);
         phyWorld[0].addBody(playerPhysic[0]);
-        for(var i = 0; i < 10; i++){
+        for(var i = 0; i < 40; i++){
             this.genRocket(randomRocket());
         }
     }
@@ -487,7 +490,7 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
             bullet[i].position.copy(bulletPhysics[i].position);
             bullet[i].quaternion.copy(bulletPhysics[i].quaternion);
         }
-        for(var i = 0; i < rocket.length; i++){
+        for(i = 0; i < rocket.length; i++){
             // var dir = rocketPhysic[i].velocity;
             // var dir_v = new THREE.Quaternion();
             // dir_v.setFromEuler(new THREE.Euler(dir.x, dir.y, dir.z));
@@ -504,7 +507,7 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
         var p = player[0].position;
         var dir = new THREE.Vector3(p.x-x, p.y-y, p.z-z);
         dir = dir.normalize();
-        var geometry = new THREE.SphereGeometry(20,2,2);
+        var geometry = new THREE.OctahedronGeometry(20);
         //var geometry = new THREE.CylinderGeometry(1, 5, 30, 30);
         var material = new THREE.MeshPhongMaterial({
             color: 0xff5809,
@@ -515,27 +518,69 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
         mesh.position.set(x,y,z);
         rocket.push(mesh);
 
+        var Octahedron = OctahedronConvex();
+
         var body = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
-            mass: 10, //刚体的质量，这里单位为kg
+            mass: 20, //刚体的质量，这里单位为kg
             position: new CANNON.Vec3(x, y, z), //刚体的位置，单位是米
-            shape: new CANNON.Sphere(20,2,2),
-            //shape: new CANNON.Cylinder(1, 5, 30, 10),
+            shape: Octahedron,
             material: new CANNON.Material({friction: 0.05, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
         });
         rocketPhysic.push(body);
         body.velocity.copy(dir);
         //var euler = new THREE.Euler(dir.x, dir.y, dir.z);
-        var dir_v = new THREE.Quaternion();
-        dir_v.setFromEuler(new THREE.Euler(dir.x, dir.y, dir.z));
-        var rot = new THREE.Quaternion();
-        rot.setFromAxisAngle(new THREE.Vector3(-1,0,0), Math.PI/2);
-        dir_v.multiply(rot);
-        body.quaternion.copy(dir_v);
-        mesh.quaternion.copy(dir_v);
+        // var dir_v = new THREE.Quaternion();
+        // dir_v.setFromEuler(new THREE.Euler(dir.x, dir.y, dir.z));
+        // var rot = new THREE.Quaternion();
+        // rot.setFromAxisAngle(new THREE.Vector3(-1,0,0), Math.PI/2);
+        // dir_v.multiply(rot);
+        // body.quaternion.copy(dir_v);
+        // mesh.quaternion.copy(dir_v);
 
         scene[0].add(mesh);
         phyWorld[0].addBody(body);
     }
+}
+function throttle(fn, delay){
+    let last = 0, timer = null;
+    return function (){
+        let context = this;
+        let args = arguments;
+        let now = +new Date();
+
+        if(now - last < delay){
+            clearTimeout(timer);
+            timer = setTimeout(function (){
+                last = now;
+                fn.apply(context,args);
+            },delay);
+        }
+        else {
+            last = now;
+            fn.apply(context,args);
+        }
+    }
+}
+function OctahedronConvex() {
+    let points = [
+        new CANNON.Vec3(20,0,0),
+        new CANNON.Vec3(-20,0,0),
+        new CANNON.Vec3(0,20,0),
+        new CANNON.Vec3(0,-20,0),
+        new CANNON.Vec3(0,0,20),
+        new CANNON.Vec3(0,0,-20)
+    ];
+    let faces = [
+        [0,4,3],
+        [0,3,5],
+        [0,2,4],
+        [0,5,2],
+        [1,3,4],
+        [1,5,3],
+        [1,4,2],
+        [1,2,5]
+    ];
+    return new CANNON.ConvexPolyhedron(points, faces);
 }
 function render(){
     requestAnimationFrame(render);
@@ -601,6 +646,8 @@ function goAim(object, aim, limitV, deltaV){
     var dir = dd[0], dist = dd[1];
     var vo = object.velocity;
     var v = Math.sqrt(vo.x*vo.x+vo.y*vo.y+vo.z*vo.z);
+    var dir_v = new THREE.Quaternion();
+    dir_v.setFromEuler(new THREE.Euler(dir.x, dir.y, -1*dir.z));
     //console.log(vo);
     if(v < limitV){
         object.velocity.x = object.velocity.x + dir.x*deltaV;
@@ -627,6 +674,8 @@ function goAim(object, aim, limitV, deltaV){
             object.velocity.z = object.velocity.z - Math.abs(dir.z*deltaV);
         }
     }
+    object.quaternion.copy(dir_v);
+    //console.log(object.quaternion);
     return dist;
 }
 function freshUI(){
