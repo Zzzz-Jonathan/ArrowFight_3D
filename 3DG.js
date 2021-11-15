@@ -1,4 +1,4 @@
-var mapSize = [3000,3000,3000], cameraSize = 10000, keyCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true;//
+var mapSize = [3000,3000,3000], cameraSize = 10000, keyCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, score = 0;//
 var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = new Array(), bulletPhysics = new Array();
 
 function Env(scene,destination,camera,renderer,timeCloud,player){
