@@ -33,7 +33,7 @@
       <circle r="101" cx="120" cy="120" fill="transparent" stroke="rgba(100,100,100,0.3)" stroke-width="2px" stroke-dasharray="640.56" stroke-dashoffset="0"></circle>
       <circle id="energy" r="110" cx="120" cy="120" fill="transparent" stroke-dashoffset="0"></circle>
     </svg>
-    <h1 id="load">LOADING...</h1>
+    <div id="load">LOADING</div>
   </div>
   <script>
     var env = new Env(scene,destination,camera,renderer,timeCloud,player);
@@ -89,10 +89,11 @@
     setInterval("freshAll(env,physic,map)",10);
     checkLoad = setInterval(function () {
       if(timeCloud.length < 6){
-        document.getElementById("load").style.display="block";
+        document.getElementByqId("load").style.display="";
       }
       else{
         document.getElementById("load").style.display="none";
+        document.getElementById("svg").style.display="";
         loading = false;
         clearInterval(checkLoad);
       }

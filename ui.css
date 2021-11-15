@@ -5,14 +5,34 @@
     stroke-dasharray: 172.7,1000;
     transform: rotate(135deg);
     transform-origin: center center;
+    display: none;
 }
 #svg {
     position: absolute; left: 0; top: 0; right: 0; bottom: 0;
     margin: auto;
 }
 #load {
+    width: 200px; height: 50px;
     position: absolute; left: 0; top: 0; right: 0; bottom: 0;
     margin: auto;
     z-index: 999;
-    /* display: none; */
+    font-size: 50px;
+    font-weight: 600;
+    color: #8c888b;
+    background: -webkit-linear-gradient(45deg, #70f7fe, #fbd7c6, #fdefac, #bfb5dd, #bed5f5);
+    -moz-linear-gradient(45deg, #70f7fe, #fbd7c6, #fdefac, #bfb5dd, #bed5f5);
+    -ms-linear-gradient(45deg, #70f7fe, #fbd7c6, #fdefac, #bfb5dd, #bed5f5);
+    color: transparent;
+    -webkit-background-clip: text;
+    /*背景裁剪为文本形式*/
+    animation: ran 10s linear infinite;
+    display: none;
+}
+@keyframes ran {
+    from {
+        backgroud-position: 0 0;
+    }
+    to {
+        background-position: 2000px 0;
+    }
 }

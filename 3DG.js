@@ -470,7 +470,7 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
         });
         playerPhysic.push(player_new);
         phyWorld[0].addBody(playerPhysic[0]);
-        for(var i = 0; i < 10; i++){
+        for(var i = 0; i < 40; i++){
             this.genRocket(randomRocket());
         }
     }
