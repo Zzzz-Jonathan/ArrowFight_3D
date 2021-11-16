@@ -1,5 +1,6 @@
-var mapSize = [3000,3000,3000], cameraSize = 10000, keyCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, score = 0, vOfPlayer = [200,130,60];//
+var mapSize = [3000,3000,3000], cameraSize = 10000, keyCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, score = [0,0], vOfPlayer = [200,130,60];//
 var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = new Array(), bulletPhysics = new Array();
+var playerModule = [], cloudModules = [];
 
 function Env(scene,destination,camera,renderer,timeCloud,player){
     this.init = function(){
@@ -182,58 +183,76 @@ function Env(scene,destination,camera,renderer,timeCloud,player){
         console.log(destination[0]);
     }
     this.setPlayer = function (){
-        // var geometry = new THREE.SphereGeometry(30, 40, 40);
-        // var material = new THREE.MeshPhongMaterial({
-        //     color: 0xffffff
-        // });
-        // mesh = new THREE.Mesh(geometry, material);
-        // mesh.castShadow = true;
-        // return  mesh;//网格模型对象Mesh
-        var OBJLoader = new THREE.OBJLoader();//obj加载器
-        var MTLLoader = new THREE.MTLLoader();//材质文件加载器
-        MTLLoader.load('./player/SciFi_Fighter.mtl', function(materials) {
-            OBJLoader.setMaterials(materials);
-            OBJLoader.load('./player/SciFi_Fighter.obj', function(obj) {
-                obj.scale.set(5, 5, 5); //放大obj组对象
-                player.push(obj);
-                scene[0].add(player[0]);
-                player[0].position.set(0,0,0);
-                //player[0].rotateY(Math.PI);
-                //player[0].quaternion.copy(camera[0].quaternion);
-            });
-        })
+        // var mesh = new THREE.Mesh();
+        // mesh.copy(playerModule[0]);
+        var mesh = playerModule[0].clone();
+        player.push(mesh);
+        scene[0].add(player[0]);
+        player[0].position.set(0,0,0);
+
+        // var OBJLoader = new THREE.OBJLoader();//obj加载器
+        // var MTLLoader = new THREE.MTLLoader();//材质文件加载器
+        // MTLLoader.load('./player/SciFi_Fighter.mtl', function(materials) {
+        //     OBJLoader.setMaterials(materials);
+        //     OBJLoader.load('./player/SciFi_Fighter.obj', function(obj) {
+        //         obj.scale.set(5, 5, 5); //放大obj组对象
+        //         player.push(obj);
+        //         scene[0].add(player[0]);
+        //         player[0].position.set(0,0,0);
+        //         //player[0].rotateY(Math.PI);
+        //         //player[0].quaternion.copy(camera[0].quaternion);
+        //     });
+        // })
     }
     this.timeCloud = function (){
-        var OBJLoader = new THREE.OBJLoader();//obj加载器
-        var MTLLoader = new THREE.MTLLoader();//材质文件加载器
-        MTLLoader.load('./Clouds.mtl', function(materials) {
-            // 返回一个包含材质的对象MaterialCreator
-            //obj的模型会和MaterialCreator包含的材质对应起来
-            OBJLoader.setMaterials(materials);
-            OBJLoader.load('./Clouds.obj', function(obj) {
-                obj.scale.set(0.05, 0.05, 0.05); //放大obj组对象
-                for(var i = 0; i < obj.children.length; i++){
-                    timeCloud[i] = obj.children[i];
-                    timeCloud[i].geometry.computeBoundingBox();
-                    var centroid = new THREE.Vector3();
-                    centroid.addVectors(timeCloud[i].geometry.boundingBox.min, timeCloud[i].geometry.boundingBox.max);
-                    centroid.multiplyScalar( 0.5 );
-                    centroid.applyMatrix4(timeCloud[i].matrixWorld);
-                    timeCloud[i].geometry.center(centroid.x*0.05, centroid.y*0.05, centroid.z*0.05)
-                    //obj.position.set(centroid.x*0.05, centroid.y*0.05, centroid.z*0.05)//
-
-                    timeCloud[i].material.color.set(0xadadad);
-                    timeCloud[i].material.specular.set(0xffffff);
-                    timeCloud[i].material.opacity = 0.75;
-                    timeCloud[i].material.transparent = true;
-                    var pos = freshInMap();
-                    timeCloud[i].position.set(pos[0], pos[1], pos[2]);
-                    timeCloud[i].receiveShadow = true;
-                    scene[0].add(timeCloud[i]);//返回的组对象插入场景中
-                    //console.log(timeCloud[i]);
-                }
-            })
-        })
+        for(var i = 0; i < cloudModules[0].children.length; i++){
+            timeCloud[i] = cloudModules[0].children[i].clone();
+            timeCloud[i].geometry.computeBoundingBox();
+            var centroid = new THREE.Vector3();
+            centroid.addVectors(timeCloud[i].geometry.boundingBox.min, timeCloud[i].geometry.boundingBox.max);
+            centroid.multiplyScalar( 0.5 );
+            centroid.applyMatrix4(timeCloud[i].matrixWorld);
+            timeCloud[i].geometry.center(centroid.x*0.05, centroid.y*0.05, centroid.z*0.05)
+            //obj.position.set(centroid.x*0.05, centroid.y*0.05, centroid.z*0.05)//
+            timeCloud[i].material.color.set(0xadadad);
+            timeCloud[i].material.specular.set(0xffffff);
+            timeCloud[i].material.opacity = 0.75;
+            timeCloud[i].material.transparent = true;
+            var pos = freshInMap();
+            timeCloud[i].position.set(pos[0], pos[1], pos[2]);
+            timeCloud[i].receiveShadow = true;
+            scene[0].add(timeCloud[i]);//返回的组对象插入场景中
+        }
+        // var OBJLoader = new THREE.OBJLoader();//obj加载器
+        // var MTLLoader = new THREE.MTLLoader();//材质文件加载器
+        // MTLLoader.load('./Clouds.mtl', function(materials) {
+        //     // 返回一个包含材质的对象MaterialCreator
+        //     //obj的模型会和MaterialCreator包含的材质对应起来
+        //     OBJLoader.setMaterials(materials);
+        //     OBJLoader.load('./Clouds.obj', function(obj) {
+        //         obj.scale.set(0.05, 0.05, 0.05); //放大obj组对象
+        //         for(var i = 0; i < obj.children.length; i++){
+        //             timeCloud[i] = obj.children[i];
+        //             timeCloud[i].geometry.computeBoundingBox();
+        //             var centroid = new THREE.Vector3();
+        //             centroid.addVectors(timeCloud[i].geometry.boundingBox.min, timeCloud[i].geometry.boundingBox.max);
+        //             centroid.multiplyScalar( 0.5 );
+        //             centroid.applyMatrix4(timeCloud[i].matrixWorld);
+        //             timeCloud[i].geometry.center(centroid.x*0.05, centroid.y*0.05, centroid.z*0.05)
+        //             //obj.position.set(centroid.x*0.05, centroid.y*0.05, centroid.z*0.05)//
+        //
+        //             timeCloud[i].material.color.set(0xadadad);
+        //             timeCloud[i].material.specular.set(0xffffff);
+        //             timeCloud[i].material.opacity = 0.75;
+        //             timeCloud[i].material.transparent = true;
+        //             var pos = freshInMap();
+        //             timeCloud[i].position.set(pos[0], pos[1], pos[2]);
+        //             timeCloud[i].receiveShadow = true;
+        //             scene[0].add(timeCloud[i]);//返回的组对象插入场景中
+        //             //console.log(timeCloud[i]);
+        //         }
+        //     })
+        // })
     }
     this.playerShoot = function(t){
         if(!loading){
@@ -418,8 +437,8 @@ function Bullet(position, direction, t){
     // }
 
     setTimeout(function(){
-        outBullet = bullet.shift();
-        outBulletBody = bulletPhysics.shift();
+        var outBullet = bullet.shift();
+        var outBulletBody = bulletPhysics.shift();
         scene[0].remove(outBullet);
         outBullet.material.dispose();
         outBullet.geometry.dispose();
@@ -617,6 +636,32 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
         scene[0].add(mesh);
         phyWorld[0].addBody(body);
     }
+}
+function moduleLoad(){
+    var OBJLoaderP = new THREE.OBJLoader();//obj加载器
+    var MTLLoaderP = new THREE.MTLLoader();//材质文件加载器
+    MTLLoaderP.load('./player/SciFi_Fighter.mtl', function(materials) {
+        OBJLoaderP.setMaterials(materials);
+        OBJLoaderP.load('./player/SciFi_Fighter.obj', function(obj) {
+            obj.scale.set(5, 5, 5); //放大obj组对象
+            //console.log(obj);
+            playerModule.push(obj);
+            //player[0].rotateY(Math.PI);
+            //player[0].quaternion.copy(camera[0].quaternion);
+        });
+    });
+
+    var OBJLoaderC = new THREE.OBJLoader();//obj加载器
+    var MTLLoaderC = new THREE.MTLLoader();//材质文件加载器
+    MTLLoaderC.load('./Clouds.mtl', function(materials) {
+        // 返回一个包含材质的对象MaterialCreator
+        //obj的模型会和MaterialCreator包含的材质对应起来
+        OBJLoaderC.setMaterials(materials);
+        OBJLoaderC.load('./Clouds.obj', function(obj) {
+            obj.scale.set(0.05, 0.05, 0.05); //放大obj组对象
+            cloudModules.push(obj);
+        });
+    });
 }
 function throttle(fn, delay){
     let last = 0, timer = null;
@@ -914,6 +959,8 @@ function arriveDestination(env){
         if(Math.abs(player[0].position.y - destination[0].position.y) < 50 ){
             if(Math.abs(player[0].position.z - destination[0].position.z) < 50 ){
                 env.fresh();
+                document.getElementById("inf").style.color = "#ffffff";
+                score[1] = score[0];
             }
         }
     }
