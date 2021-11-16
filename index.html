@@ -24,7 +24,7 @@
 
 <body>
   <div id="game">
-    <div id="inf"></div>
+    <div id="inf">00</div>
     <div id="map" style="position: absolute;bottom: 0"></div>
     <svg id="svg" width="240" height="240" version="1.1" style="display:none" xmlns="http://www.w3.org/2000/svg">
       <circle r="15" cx="120" cy="120" fill="transparent" stroke="rgba(255,255,255,0.8)" stroke-width="2px"></circle>
@@ -40,16 +40,8 @@
     var env = new Env(scene,destination,camera,renderer,timeCloud,player);
     var physic = new Physic(phyWorld,destinationPhysic,playerPhysic,rocket,rocketPhysic);
     var map = new MiniMap(scene,destination,player,renderer,camera,timeCloudMap);
-    
+    var move = new Move(), engine;
     env.init();
-    physic.init();
-    map.init();
-    physic.freshPhysic();
-    env.fresh();
-
-    var move = new Move(), engine = new Engine(camera[0],playerPhysic[0]);
-    //engine.init();
-    render();
 
     document.addEventListener('mousedown', function(){
       if(document.pointerLockElement !== document.body){
@@ -66,9 +58,9 @@
     });
     document.body.addEventListener('mousemove',function(event){
       if (document.pointerLockElement === document.body){
-        player[0].rotateY(-1*event.movementX/500);
+        //player[0].rotateY(-1*event.movementX/500);
         camera[0].rotateY(-1*event.movementX/500);
-        player[0].rotateX(-1*event.movementY/500);
+        //player[0].rotateX(-1*event.movementY/500);
         camera[0].rotateX(-1*event.movementY/500);
         }
     });
@@ -94,27 +86,33 @@
         document.getElementById("inf").innerHTML = score;
       }
     },100);
-    for(var i = 0; i < rocketPhysic.length; i++){
-      rocketPhysic[i].addEventListener("collide", collideTest);
-    }
-
 
     setInterval("freshAll(env,physic,map)",10);
     checkLoad = setInterval(function () {
-      if(timeCloud.length < 6){
+      if((timeCloud.length < 6) || (player.length < 1)){
         document.getElementById("load").style.display="";
         //console.log(document.getElementById("load"));
       }
       else{
+        physic.init();
+        map.init();
+        physic.freshPhysic();
+        env.fresh();
+        engine = new Engine(camera[0],playerPhysic[0]);
+        //engine.init();
+        render();
         document.getElementById("load").style.display="none";
         document.getElementById("svg").style.display="";
+        for(var i = 0; i < rocketPhysic.length; i++){
+          rocketPhysic[i].addEventListener("collide", collideTest);
+        }
         loading = false;
         clearInterval(checkLoad);
       }
     },100);
     setInterval(function () {
       //move.dirToAimRelative(camera[0],destinationPhysic[0]);
-      console.log(playerPhysic[0].velocity);
+      //console.log(player.length);
     },1000);
   </script>
 </body>
