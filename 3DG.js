@@ -887,12 +887,12 @@ function keyMotion(){
     //camera[0].translateY(500);
 }
 function cameraBehind(x, y, moveSlide, camera, player){
-    var slideSide1 = 75, lenSlide;
+    var slideSide1 = 30, slideSide2 = 45, lenSlide;
     if(Math.abs(moveSlide) < vOfPlayer[2]){
         lenSlide = (moveSlide/vOfPlayer[2])*slideSide1;
     }
     else {
-        lenSlide = slideSide1;
+        lenSlide = slideSide1 + slideSide2*((moveSlide - vOfPlayer[2])/200);
         if(moveSlide < 0){
             lenSlide = -1*lenSlide;
         }
