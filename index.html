@@ -24,7 +24,7 @@
 
 <body>
   <div id="game">
-    <div id="inf"></div>
+    <div id="inf">00</div>
     <div id="map" style="position: absolute;bottom: 0"></div>
     <svg id="svg" width="240" height="240" version="1.1" style="display:none" xmlns="http://www.w3.org/2000/svg">
       <circle r="15" cx="120" cy="120" fill="transparent" stroke="rgba(255,255,255,0.8)" stroke-width="2px"></circle>
@@ -32,24 +32,17 @@
       <circle r="1" cx="120" cy="120" fill="rgba(255,0,0,0.8)" stroke="rgba(255,0,0,0.8)"></circle>
       <circle r="110" cx="120" cy="120" fill="transparent" stroke="rgba(100,100,100,0.3)" stroke-width="20px" stroke-dasharray="172.7,172.7" stroke-dashoffset="86.35"></circle>
       <circle r="101" cx="120" cy="120" fill="transparent" stroke="rgba(100,100,100,0.3)" stroke-width="2px" stroke-dasharray="640.56" stroke-dashoffset="0"></circle>
-      <circle id="energy" r="110" cx="120" cy="120" fill="transparent" stroke-dashoffset="0"></circle>
+      <circle id="energy" r="110" cx="120" cy="120" fill="transparent" stroke-dashoffset="0" ></circle>
     </svg>
     <div id="load" style="display:none">LOADING</div>
   </div>
   <script>
+    moduleLoad();
+
     var env = new Env(scene,destination,camera,renderer,timeCloud,player);
     var physic = new Physic(phyWorld,destinationPhysic,playerPhysic,rocket,rocketPhysic);
     var map = new MiniMap(scene,destination,player,renderer,camera,timeCloudMap);
-    
-    env.init();
-    physic.init();
-    map.init();
-    physic.freshPhysic();
-    env.fresh();
-
-    var move = new Move(), engine = new Engine(camera[0],playerPhysic[0]);
-    //engine.init();
-    render();
+    var move = new Move(), engine, ui = new UI();
 
     document.addEventListener('mousedown', function(){
       if(document.pointerLockElement !== document.body){
@@ -66,9 +59,9 @@
     });
     document.body.addEventListener('mousemove',function(event){
       if (document.pointerLockElement === document.body){
-        player[0].rotateY(-1*event.movementX/500);
+        //player[0].rotateY(-1*event.movementX/500);
         camera[0].rotateY(-1*event.movementX/500);
-        player[0].rotateX(-1*event.movementY/500);
+        //player[0].rotateX(-1*event.movementY/500);
         camera[0].rotateX(-1*event.movementY/500);
         }
     });
@@ -78,43 +71,56 @@
     document.onkeyup=function(event){
       keyCode[event.keyCode] = false;
     };
-    window.onresize=function(){
-      // 重置渲染器输出画布canvas尺寸
-      renderer[0].setSize(window.innerWidth,window.innerHeight);
-      // 全屏情况下：设置观察范围长宽比aspect为窗口宽高比
-      camera[0].aspect = window.innerWidth/window.innerHeight;
-      // 渲染器执行render方法的时候会读取相机对象的投影矩阵属性projectionMatrix
-      // 但是不会每渲染一帧，就通过相机的属性计算投影矩阵(节约计算资源)
-      // 如果相机的一些属性发生了变化，需要执行updateProjectionMatrix ()方法更新相机的投影矩阵
-      camera[0].updateProjectionMatrix ();
-    };
+
     const collideTest = throttle(function (event){
       if(event.contact.bj.name === "bullet"){
-        score = score + 1;
-        document.getElementById("inf").innerHTML = score;
+        score[0] = score[0] + 1;
+        //document.getElementById("inf").innerHTML = score[0];
       }
     },100);
-    for(var i = 0; i < rocketPhysic.length; i++){
-      rocketPhysic[i].addEventListener("collide", collideTest);
-    }
 
-
-    setInterval("freshAll(env,physic,map)",10);
+    setInterval("freshAll(env,physic,map,ui)",10);
     checkLoad = setInterval(function () {
-      if(timeCloud.length < 6){
+      if((cloudModules.length < 1) || (playerModule.length < 1)){//
         document.getElementById("load").style.display="";
         //console.log(document.getElementById("load"));
       }
       else{
+        env.init();
+        physic.init();
+        map.init();
+        ui.init();
+        physic.freshPhysic();
+        env.fresh();
+        engine = new Engine(camera[0],playerPhysic[0]);
+        //engine.init();
+        console.log(player[0])
+        render();
+
         document.getElementById("load").style.display="none";
         document.getElementById("svg").style.display="";
         loading = false;
+
+        for(var i = 0; i < rocketPhysic.length; i++){
+          rocketPhysic[i].addEventListener("collide", collideTest);
+        }
+        window.onresize=function(){
+          // 重置渲染器输出画布canvas尺寸
+          renderer[0].setSize(window.innerWidth,window.innerHeight);
+          // 全屏情况下：设置观察范围长宽比aspect为窗口宽高比
+          camera[0].aspect = window.innerWidth/window.innerHeight;
+          // 渲染器执行render方法的时候会读取相机对象的投影矩阵属性projectionMatrix
+          // 但是不会每渲染一帧，就通过相机的属性计算投影矩阵(节约计算资源)
+          // 如果相机的一些属性发生了变化，需要执行updateProjectionMatrix ()方法更新相机的投影矩阵
+          camera[0].updateProjectionMatrix ();
+        };
+
         clearInterval(checkLoad);
       }
     },100);
     setInterval(function () {
       //move.dirToAimRelative(camera[0],destinationPhysic[0]);
-      console.log(playerPhysic[0].velocity);
+      //console.log(scene[0]);
     },1000);
   </script>
 </body>

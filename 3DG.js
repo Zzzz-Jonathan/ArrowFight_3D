@@ -1,5 +1,6 @@
-var mapSize = [3000,3000,3000], cameraSize = 10000, keyCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, score = 0;//
+var mapSize = [3000,3000,3000], cameraSize = 10000, keyCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, score = [0,0], vOfPlayer = [200,130,60];//
 var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = new Array(), bulletPhysics = new Array();
+var playerModule = [], cloudModules = [];
 
 function Env(scene,destination,camera,renderer,timeCloud,player){
     this.init = function(){
@@ -18,17 +19,16 @@ function Env(scene,destination,camera,renderer,timeCloud,player){
         // scene[0].add(destination[0]);
         destination.push(this.destinationCube());
         scene[0].add(destination[0]);
+        var camera_new = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 1, cameraSize);
+        camera.push(camera_new);
         //终点的网格模型添加到场景中
         var axesHelper = new THREE.AxesHelper(30);
         scene[0].add(axesHelper);//辅助坐标系添加到场景中
         //至此，创建了sence，destination和axeshelper
-        player.push(this.setPlayer());
-        scene[0].add(player[0]);
-        player[0].position.set(0,0,0);
+        this.setPlayer();
+        //console.log(player.length);
         //创建了player
-        var camera_new = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 1, cameraSize);
-        camera.push(camera_new);
-        this.cameraPosition = [player[0].position.x,player[0].position.y,player[0].position.z];
+        this.cameraPosition = [0,0,0];
         //this.cameraDirection = [0,0,0];
         this.moveCamera();
         //设置相机
@@ -183,45 +183,76 @@ function Env(scene,destination,camera,renderer,timeCloud,player){
         console.log(destination[0]);
     }
     this.setPlayer = function (){
-        var geometry = new THREE.SphereGeometry(30, 40, 40);
-        var material = new THREE.MeshPhongMaterial({
-            color: 0xffffff
-        });
-        mesh = new THREE.Mesh(geometry, material);
-        mesh.castShadow = true;
-        return  mesh;//网格模型对象Mesh
+        // var mesh = new THREE.Mesh();
+        // mesh.copy(playerModule[0]);
+        var mesh = playerModule[0].clone();
+        player.push(mesh);
+        scene[0].add(player[0]);
+        player[0].position.set(0,0,0);
+
+        // var OBJLoader = new THREE.OBJLoader();//obj加载器
+        // var MTLLoader = new THREE.MTLLoader();//材质文件加载器
+        // MTLLoader.load('./player/SciFi_Fighter.mtl', function(materials) {
+        //     OBJLoader.setMaterials(materials);
+        //     OBJLoader.load('./player/SciFi_Fighter.obj', function(obj) {
+        //         obj.scale.set(5, 5, 5); //放大obj组对象
+        //         player.push(obj);
+        //         scene[0].add(player[0]);
+        //         player[0].position.set(0,0,0);
+        //         //player[0].rotateY(Math.PI);
+        //         //player[0].quaternion.copy(camera[0].quaternion);
+        //     });
+        // })
     }
     this.timeCloud = function (){
-        var OBJLoader = new THREE.OBJLoader();//obj加载器
-        var MTLLoader = new THREE.MTLLoader();//材质文件加载器
-        MTLLoader.load('./Clouds.mtl', function(materials) {
-            // 返回一个包含材质的对象MaterialCreator
-            //obj的模型会和MaterialCreator包含的材质对应起来
-            OBJLoader.setMaterials(materials);
-            OBJLoader.load('./Clouds.obj', function(obj) {
-                obj.scale.set(0.05, 0.05, 0.05); //放大obj组对象
-                for(var i = 0; i < obj.children.length; i++){
-                    timeCloud[i] = obj.children[i];
-                    timeCloud[i].geometry.computeBoundingBox();
-                    var centroid = new THREE.Vector3();
-                    centroid.addVectors(timeCloud[i].geometry.boundingBox.min, timeCloud[i].geometry.boundingBox.max);
-                    centroid.multiplyScalar( 0.5 );
-                    centroid.applyMatrix4(timeCloud[i].matrixWorld);
-                    timeCloud[i].geometry.center(centroid.x*0.05, centroid.y*0.05, centroid.z*0.05)
-                    //obj.position.set(centroid.x*0.05, centroid.y*0.05, centroid.z*0.05)//
-
-                    timeCloud[i].material.color.set(0xadadad);
-                    timeCloud[i].material.specular.set(0xffffff);
-                    timeCloud[i].material.opacity = 0.75;
-                    timeCloud[i].material.transparent = true;
-                    var pos = freshInMap();
-                    timeCloud[i].position.set(pos[0], pos[1], pos[2]);
-                    timeCloud[i].receiveShadow = true;
-                    scene[0].add(timeCloud[i]);//返回的组对象插入场景中
-                    //console.log(timeCloud[i]);
-                }
-            })
-        })
+        for(var i = 0; i < cloudModules[0].children.length; i++){
+            timeCloud[i] = cloudModules[0].children[i].clone();
+            timeCloud[i].geometry.computeBoundingBox();
+            var centroid = new THREE.Vector3();
+            centroid.addVectors(timeCloud[i].geometry.boundingBox.min, timeCloud[i].geometry.boundingBox.max);
+            centroid.multiplyScalar( 0.5 );
+            centroid.applyMatrix4(timeCloud[i].matrixWorld);
+            timeCloud[i].geometry.center(centroid.x*0.05, centroid.y*0.05, centroid.z*0.05)
+            //obj.position.set(centroid.x*0.05, centroid.y*0.05, centroid.z*0.05)//
+            timeCloud[i].material.color.set(0xadadad);
+            timeCloud[i].material.specular.set(0xffffff);
+            timeCloud[i].material.opacity = 0.75;
+            timeCloud[i].material.transparent = true;
+            var pos = freshInMap();
+            timeCloud[i].position.set(pos[0], pos[1], pos[2]);
+            timeCloud[i].receiveShadow = true;
+            scene[0].add(timeCloud[i]);//返回的组对象插入场景中
+        }
+        // var OBJLoader = new THREE.OBJLoader();//obj加载器
+        // var MTLLoader = new THREE.MTLLoader();//材质文件加载器
+        // MTLLoader.load('./Clouds.mtl', function(materials) {
+        //     // 返回一个包含材质的对象MaterialCreator
+        //     //obj的模型会和MaterialCreator包含的材质对应起来
+        //     OBJLoader.setMaterials(materials);
+        //     OBJLoader.load('./Clouds.obj', function(obj) {
+        //         obj.scale.set(0.05, 0.05, 0.05); //放大obj组对象
+        //         for(var i = 0; i < obj.children.length; i++){
+        //             timeCloud[i] = obj.children[i];
+        //             timeCloud[i].geometry.computeBoundingBox();
+        //             var centroid = new THREE.Vector3();
+        //             centroid.addVectors(timeCloud[i].geometry.boundingBox.min, timeCloud[i].geometry.boundingBox.max);
+        //             centroid.multiplyScalar( 0.5 );
+        //             centroid.applyMatrix4(timeCloud[i].matrixWorld);
+        //             timeCloud[i].geometry.center(centroid.x*0.05, centroid.y*0.05, centroid.z*0.05)
+        //             //obj.position.set(centroid.x*0.05, centroid.y*0.05, centroid.z*0.05)//
+        //
+        //             timeCloud[i].material.color.set(0xadadad);
+        //             timeCloud[i].material.specular.set(0xffffff);
+        //             timeCloud[i].material.opacity = 0.75;
+        //             timeCloud[i].material.transparent = true;
+        //             var pos = freshInMap();
+        //             timeCloud[i].position.set(pos[0], pos[1], pos[2]);
+        //             timeCloud[i].receiveShadow = true;
+        //             scene[0].add(timeCloud[i]);//返回的组对象插入场景中
+        //             //console.log(timeCloud[i]);
+        //         }
+        //     })
+        // })
     }
     this.playerShoot = function(t){
         if(!loading){
@@ -406,8 +437,8 @@ function Bullet(position, direction, t){
     // }
 
     setTimeout(function(){
-        outBullet = bullet.shift();
-        outBulletBody = bulletPhysics.shift();
+        var outBullet = bullet.shift();
+        var outBulletBody = bulletPhysics.shift();
         scene[0].remove(outBullet);
         outBullet.material.dispose();
         outBullet.geometry.dispose();
@@ -415,7 +446,7 @@ function Bullet(position, direction, t){
     },tset);
 }
 function randomRocket(){
-    var max = 1500, min = 400;
+    var max = 2000, min =700;
     var length = (max - min)*Math.random()+min;
     var x = Math.random(), y = Math.random(), z = Math.random();
     var rx = (x*x)/(x*x+y*y+z*z), ry= (y*y)/(x*x+y*y+z*z), rz = (z*z)/(x*x+y*y+z*z);
@@ -444,12 +475,13 @@ function Move(){
         //object.matrixWorldInverse.multiplyMatrices(object.matrixWorld,matrix);
         //console.log(matrix.elements);
         //matrix.transpose(matrix);
-        var worldDirAndDist = this.dirToAim(object, aim), worldVertex = new THREE.Vector3();
+        var worldDirAndDist = this.dirToAim(scene[0], aim), worldVertex = new THREE.Vector3();
         worldVertex.copy(worldDirAndDist[2]);
         var vertex4 = new THREE.Vector4(worldVertex.x, worldVertex.y, worldVertex.z, 1);
-        //console.log(vertex4);
         vertex4.applyMatrix4(matrix);
-        console.log(vertex4);
+        var dir = new THREE.Vector3(vertex4.x, vertex4.y, vertex4.z);
+        dir.normalize();
+        //console.log(Math.tan(Math.PI/3));
 
         // var dir = [];
         // for(var i = 0; i < 4; i++){
@@ -463,7 +495,7 @@ function Move(){
         //dirFinal.normalize();
         //console.log(camera[0].position);
         //console.log(dirFinal);
-        return vertex4;
+        return dir;
     }
     this.goAim = function (object, dir, dist, limitV, deltaV){
         var vo = object.velocity;
@@ -524,7 +556,7 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
         var destinationPhysic_new = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
             mass: 0, //刚体的质量，这里单位为kg
             position: new CANNON.Vec3(destination[0].position.x, destination[0].position.y, destination[0].position.z), //刚体的位置，单位是米
-            shape: new CANNON.Box(new CANNON.Vec3(100, 100, 100)), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
+            shape: new CANNON.Box(new CANNON.Vec3(50, 50, 50)), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
             material: new CANNON.Material({friction: 0.05, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
         });
         destinationPhysic.push(destinationPhysic_new);
@@ -549,7 +581,7 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
         destination[0].position.copy(destinationPhysic[0].position);
         destination[0].quaternion.copy(destinationPhysic[0].quaternion);//更新终点
         player[0].position.copy(playerPhysic[0].position);
-        player[0].quaternion.copy(playerPhysic[0].quaternion);//更新playerPhysic
+        playerPhysic[0].quaternion.copy(player[0].quaternion);//更新playerPhysic
 
         for(var i = 0; i < bullet.length; i++){
             bullet[i].position.copy(bulletPhysics[i].position);
@@ -581,6 +613,7 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
         });
         mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
         mesh.position.set(x,y,z);
+        mesh.name = "rocket";
         rocket.push(mesh);
 
         var Octahedron = OctahedronConvex();
@@ -605,6 +638,32 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
         scene[0].add(mesh);
         phyWorld[0].addBody(body);
     }
+}
+function moduleLoad(){
+    var OBJLoaderP = new THREE.OBJLoader();//obj加载器
+    var MTLLoaderP = new THREE.MTLLoader();//材质文件加载器
+    MTLLoaderP.load('./player/SciFi_Fighter.mtl', function(materials) {
+        OBJLoaderP.setMaterials(materials);
+        OBJLoaderP.load('./player/SciFi_Fighter.obj', function(obj) {
+            obj.scale.set(5, 5, 5); //放大obj组对象
+            //console.log(obj);
+            playerModule.push(obj);
+            //player[0].rotateY(Math.PI);
+            //player[0].quaternion.copy(camera[0].quaternion);
+        });
+    });
+
+    var OBJLoaderC = new THREE.OBJLoader();//obj加载器
+    var MTLLoaderC = new THREE.MTLLoader();//材质文件加载器
+    MTLLoaderC.load('./Clouds.mtl', function(materials) {
+        // 返回一个包含材质的对象MaterialCreator
+        //obj的模型会和MaterialCreator包含的材质对应起来
+        OBJLoaderC.setMaterials(materials);
+        OBJLoaderC.load('./Clouds.obj', function(obj) {
+            obj.scale.set(0.05, 0.05, 0.05); //放大obj组对象
+            cloudModules.push(obj);
+        });
+    });
 }
 function throttle(fn, delay){
     let last = 0, timer = null;
@@ -685,71 +744,127 @@ function Engine(object, objectPhysic){
     this.nZ = function (vMax, vDelta){
         this.init();
         var dir = new THREE.Vector3(-1*this.dirz.x, -1*this.dirz.y, -1*this.dirz.z);
-        if(this.vOfz > -1*vMax){
-            objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*vDelta;
-            objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*vDelta;
-            objectPhysic.velocity.z = objectPhysic.velocity.z + dir.z*vDelta;
+        if((vMax === 0) && (Math.abs(this.vOfz) < 5)){
+            if(Math.abs(this.vOfz) > 1){
+                if(this.vOfz > 0){
+                    objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*Math.abs(this.vOfz);
+                    objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*Math.abs(this.vOfz);
+                    objectPhysic.velocity.z = objectPhysic.velocity.z + dir.z*Math.abs(this.vOfz);
+                }
+                else {
+                    objectPhysic.velocity.x = objectPhysic.velocity.x - dir.x*Math.abs(this.vOfz);
+                    objectPhysic.velocity.y = objectPhysic.velocity.y - dir.y*Math.abs(this.vOfz);
+                    objectPhysic.velocity.z = objectPhysic.velocity.z - dir.z*Math.abs(this.vOfz);
+                }
+            }
         }
         else {
-            objectPhysic.velocity.x = objectPhysic.velocity.x - dir.x*vDelta;
-            objectPhysic.velocity.y = objectPhysic.velocity.y - dir.y*vDelta;
-            objectPhysic.velocity.z = objectPhysic.velocity.z - dir.z*vDelta;
+            if(Math.abs(this.vOfz - (-1*vMax)) > 5){
+                if(this.vOfz > -1*vMax){
+                    objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*vDelta;
+                    objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*vDelta;
+                    objectPhysic.velocity.z = objectPhysic.velocity.z + dir.z*vDelta;
+                }
+                else {
+                    objectPhysic.velocity.x = objectPhysic.velocity.x - dir.x*vDelta;
+                    objectPhysic.velocity.y = objectPhysic.velocity.y - dir.y*vDelta;
+                    objectPhysic.velocity.z = objectPhysic.velocity.z - dir.z*vDelta;
+                }
+            }
         }
     }
     this.pZ = function (vMax, vDelta){
         this.init();
         var dir = new THREE.Vector3(this.dirz.x, this.dirz.y, this.dirz.z);
-        if(this.vOfz < vMax){
-            objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*vDelta;
-            objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*vDelta;
-            objectPhysic.velocity.z = objectPhysic.velocity.z + dir.z*vDelta;
-        }
-        else {
-            objectPhysic.velocity.x = objectPhysic.velocity.x - dir.x*vDelta;
-            objectPhysic.velocity.y = objectPhysic.velocity.y - dir.y*vDelta;
-            objectPhysic.velocity.z = objectPhysic.velocity.z - dir.z*vDelta;
+        if(Math.abs(this.vOfz - vMax) > 5){
+            if(this.vOfz < vMax){
+                objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*vDelta;
+                objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*vDelta;
+                objectPhysic.velocity.z = objectPhysic.velocity.z + dir.z*vDelta;
+            }
+            else {
+                objectPhysic.velocity.x = objectPhysic.velocity.x - dir.x*vDelta;
+                objectPhysic.velocity.y = objectPhysic.velocity.y - dir.y*vDelta;
+                objectPhysic.velocity.z = objectPhysic.velocity.z - dir.z*vDelta;
+            }
         }
     }
     this.nX = function (vMax, vDelta){
         this.init();
         var dir = new THREE.Vector3(-1*this.dirx.x, -1*this.dirx.y, -1*this.dirx.z);
-        if(this.vOfx > -1*vMax){
-            objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*vDelta;
-            objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*vDelta;
-            objectPhysic.velocity.z = objectPhysic.velocity.z + dir.z*vDelta;
+        if((vMax === 0) && (Math.abs(this.vOfx) < 5)){
+            if(Math.abs(this.vOfx) > 1){
+                if(this.vOfx > 0){
+                    objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*Math.abs(this.vOfx);
+                    objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*Math.abs(this.vOfx);
+                    objectPhysic.velocity.z = objectPhysic.velocity.z + dir.z*Math.abs(this.vOfx);
+                }
+                else {
+                    objectPhysic.velocity.x = objectPhysic.velocity.x - dir.x*Math.abs(this.vOfx);
+                    objectPhysic.velocity.y = objectPhysic.velocity.y - dir.y*Math.abs(this.vOfx);
+                    objectPhysic.velocity.z = objectPhysic.velocity.z - dir.z*Math.abs(this.vOfx);
+                }
+            }
         }
         else {
-            objectPhysic.velocity.x = objectPhysic.velocity.x - dir.x*vDelta;
-            objectPhysic.velocity.y = objectPhysic.velocity.y - dir.y*vDelta;
-            objectPhysic.velocity.z = objectPhysic.velocity.z - dir.z*vDelta;
+            if(Math.abs(this.vOfx - (-1*vMax)) > 5){
+                if(this.vOfx > -1*vMax){
+                    objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*vDelta;
+                    objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*vDelta;
+                    objectPhysic.velocity.z = objectPhysic.velocity.z + dir.z*vDelta;
+                }
+                else {
+                    objectPhysic.velocity.x = objectPhysic.velocity.x - dir.x*vDelta;
+                    objectPhysic.velocity.y = objectPhysic.velocity.y - dir.y*vDelta;
+                    objectPhysic.velocity.z = objectPhysic.velocity.z - dir.z*vDelta;
+                }
+            }
         }
     }
     this.pX = function (vMax, vDelta){
         this.init();
         var dir = new THREE.Vector3(this.dirx.x, this.dirx.y, this.dirx.z);
-        if(this.vOfx < vMax){
-            objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*vDelta;
-            objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*vDelta;
-            objectPhysic.velocity.z = objectPhysic.velocity.z + dir.z*vDelta;
-        }
-        else {
-            objectPhysic.velocity.x = objectPhysic.velocity.x - dir.x*vDelta;
-            objectPhysic.velocity.y = objectPhysic.velocity.y - dir.y*vDelta;
-            objectPhysic.velocity.z = objectPhysic.velocity.z - dir.z*vDelta;
+        if(Math.abs(this.vOfx - vMax) > 5){
+            if(this.vOfx < vMax){
+                objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*vDelta;
+                objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*vDelta;
+                objectPhysic.velocity.z = objectPhysic.velocity.z + dir.z*vDelta;
+            }
+            else {
+                objectPhysic.velocity.x = objectPhysic.velocity.x - dir.x*vDelta;
+                objectPhysic.velocity.y = objectPhysic.velocity.y - dir.y*vDelta;
+                objectPhysic.velocity.z = objectPhysic.velocity.z - dir.z*vDelta;
+            }
         }
     }
     this.pY = function (vMax, vDelta){
         this.init();
         var dir = new THREE.Vector3(this.diry.x, this.diry.y, this.diry.z);
-        if(this.vOfy < vMax){
-            objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*vDelta;
-            objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*vDelta;
-            objectPhysic.velocity.z = objectPhysic.velocity.z + dir.z*vDelta;
+        if((vMax === 0) && (Math.abs(this.vOfy) < 5)){
+            if(Math.abs(this.vOfy) > 1){
+                if(this.vOfy > 0){
+                    objectPhysic.velocity.x = objectPhysic.velocity.x - dir.x*Math.abs(this.vOfy);
+                    objectPhysic.velocity.y = objectPhysic.velocity.y - dir.y*Math.abs(this.vOfy);
+                    objectPhysic.velocity.z = objectPhysic.velocity.z - dir.z*Math.abs(this.vOfy);
+                }
+                else {
+                    objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*Math.abs(this.vOfy);
+                    objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*Math.abs(this.vOfy);
+                    objectPhysic.velocity.z = objectPhysic.velocity.z + dir.z*Math.abs(this.vOfy);
+                }
+            }
         }
         else {
-            objectPhysic.velocity.x = objectPhysic.velocity.x - dir.x*vDelta;
-            objectPhysic.velocity.y = objectPhysic.velocity.y - dir.y*vDelta;
-            objectPhysic.velocity.z = objectPhysic.velocity.z - dir.z*vDelta;
+            if(this.vOfy < vMax){
+                objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*vDelta;
+                objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*vDelta;
+                objectPhysic.velocity.z = objectPhysic.velocity.z + dir.z*vDelta;
+            }
+            else {
+                objectPhysic.velocity.x = objectPhysic.velocity.x - dir.x*vDelta;
+                objectPhysic.velocity.y = objectPhysic.velocity.y - dir.y*vDelta;
+                objectPhysic.velocity.z = objectPhysic.velocity.z - dir.z*vDelta;
+            }
         }
     }
 }
@@ -760,15 +875,15 @@ function keyMotion(){
         //console.log(playerPhysic[0]);
         if(keyCode[87] && !keyCode[83]){
             if(keyCode[32] && (moveEnergy >= 0)){
-                engine.nZ(200,10);
+                engine.nZ(vOfPlayer[0],10);
                 moveEnergy = moveEnergy -1;
             }
             else {
-                engine.nZ(130,7);
+                engine.nZ(vOfPlayer[1],7);
             }
         }
         if(keyCode[83] && !keyCode[87]){//按下S
-            engine.pZ(60,4);
+            engine.pZ(vOfPlayer[2],4);
         }
     }
     else {
@@ -777,10 +892,10 @@ function keyMotion(){
     }
     if(keyCode[65] || keyCode[68]){
         if(keyCode[65] && !keyCode[68]){
-            engine.nX(60,4);
+            engine.nX(vOfPlayer[2],4);
         }//按下A
         if(keyCode[68] && !keyCode[65]){
-            engine.pX(60,4);
+            engine.pX(vOfPlayer[2],4);
         }//按下D
     }
     else {
@@ -788,53 +903,156 @@ function keyMotion(){
     }
     engine.pY(0,1);
     if(keyCode[81]){
-        player[0].rotateZ(-0.01);
+        //player[0].rotateZ(-0.01);
         camera[0].rotateZ(-0.01);
         // console.log(player[0]);
         // console.log(camera[0]);
     }//按下Q
     if(keyCode[69]){
-        player[0].rotateZ(0.01);
+        //player[0].rotateZ(0.01);
         camera[0].rotateZ(0.01);
     }//按下E
-    if(keyCode[82]){
-        player[0].rotation.z = 0;
-        camera[0].rotation.z = 0;
-    }//按下R
+    // if(keyCode[82]){
+    //     player[0].rotation.z = 0;
+    //     camera[0].rotation.z = 0;
+    // }//按下R
 
     if((moveEnergy < moveEnergyMax) && (!keyCode[32] || !keyCode[87])){
         moveEnergy = moveEnergy + 0.5;
     }
 
-    camera[0].position.x = player[0].position.x;
-    camera[0].position.y = player[0].position.y;
-    camera[0].position.z = player[0].position.z;
+    engine.init();
+    cameraBehind(-150, -40, engine.vOfx, camera[0], playerPhysic[0]);
+
+    var rot = new THREE.Quaternion(), dirCamera = new THREE.Quaternion();
+    dirCamera.copy(camera[0].quaternion);
+    rot.setFromAxisAngle(new THREE.Vector3(0,1,0), Math.PI);
+    dirCamera.multiply(rot);
+    player[0].quaternion.copy(dirCamera);
     //camera[0].translateZ(500);
     //camera[0].lookAt(player[0].position);
     //camera[0].translateY(500);
+}
+function cameraBehind(x, y, moveSlide, camera, player){
+    var slideSide1 = 30, slideSide2 = 45, lenSlide;
+    if(Math.abs(moveSlide) < vOfPlayer[2]){
+        lenSlide = (moveSlide/vOfPlayer[2])*slideSide1;
+    }
+    else {
+        lenSlide = slideSide1 + slideSide2*((moveSlide - vOfPlayer[2])/200);
+        if(moveSlide < 0){
+            lenSlide = -1*lenSlide;
+        }
+    }
+    var poC = camera.position, poP = player.position;
+    var matrix = new THREE.Matrix4();
+    matrix.copy(camera.matrixWorld);
+    var dir = new THREE.Vector4(lenSlide,y,x,1);
+    dir.applyMatrix4(matrix);
+    dir = new THREE.Vector3(dir.x - poC.x, dir.y - poC.y, dir.z - poC.z);
+    //console.log(dir);
+
+    camera.position.x = poP.x - dir.x;
+    camera.position.y = poP.y - dir.y;
+    camera.position.z = poP.z - dir.z;
 }
 function arriveDestination(env){
     if(Math.abs(player[0].position.x - destination[0].position.x) < 50 ){
         if(Math.abs(player[0].position.y - destination[0].position.y) < 50 ){
             if(Math.abs(player[0].position.z - destination[0].position.z) < 50 ){
                 env.fresh();
+                document.getElementById("inf").style.color = "#ffffff";
+                score[1] = score[0];
             }
         }
     }
 }
-function freshUI(){
-    var pct = 172.7 - (moveEnergy/moveEnergyMax)*172.7;
-    //console.log(document.getElementById("energy"));
-    document.getElementById("energy").setAttribute('stroke-dashoffset',pct);
+function UI(){
+    this.init = function(){
+        this.rockSvgExist = new Array(1024).fill(false);
+    }
+    this.fresh = function(){
+        var pct = 172.7 - (moveEnergy/moveEnergyMax)*172.7;
+        //console.log(document.getElementById("energy"));
+        document.getElementById("energy").setAttribute('stroke-dashoffset',pct);
+
+        document.getElementById("inf").innerHTML = score[0];
+        if((score[0] - score[1]) > 2){
+            destinationPhysic[0].collisionFilterGroup = 2;
+            destinationPhysic[0].collisionFilterGroup = 2;
+            document.getElementById("inf").style.color = "#ff0000";
+            //console.log("success!")
+        }
+
+        for(var i = 0; i < scene[0].children.length; i++){
+            if(scene[0].children[i].name === "rocket"){
+                var id = scene[0].children[i].id, rockExist = true;
+                var dd = move.dirToAim(playerPhysic[0], scene[0].children[i]);
+                var dir = move.dirToAimRelative(camera[0], scene[0].children[i]);
+                var deg = (Math.sqrt(dir.x*dir.x + dir.y*dir.y)/Math.abs(dir.z));
+                if(dir.z < 0 && deg < Math.tan(Math.PI/3)){
+                    rockExist = false;
+                    //console.log(i+" can see!");
+                }
+                else {
+                    if(dd[1] > 800){rockExist = false;}
+                    else {
+                        var len = Math.sqrt(dir.x*dir.x + dir.y*dir.y)
+                        var xydir = [dir.x/len, dir.y/len];
+                        var degflat = Math.atan(xydir[0]/xydir[1]);
+                        if(xydir[1] < 0){degflat = degflat + Math.PI;}
+                        degflat = degflat*(180/Math.PI);
+                    }
+                }
+                if(this.rockSvgExist[id] !== true){
+                    if(rockExist){
+                        //添加进html 
+                        this.genEnemyPosition(id, degflat);
+                        this.rockSvgExist[id] = true;
+                    }
+                }
+                else {
+                    var obj = document.getElementById("rocket"+id);
+                    if(!rockExist){
+                        obj.remove();
+                        this.rockSvgExist[id] = false;
+                    }
+                    else {
+                        obj.style.transform = "rotate("+degflat+"deg)"
+                        //console.log(dd[1]);
+                        if(dd[1] < 200){
+                            obj.setAttribute("fill", 'rgba(255,0,0,0.7)');
+                        }
+                        else {
+                            obj.setAttribute("fill", 'rgba(218,165,32,0.7)');
+                        }
+                        //更新
+                    }
+                }
+            }
+        }
+    }
+    this.genEnemyPosition = function(id, deg){
+        //var ep = '<polygon id="'+'rocket'+id+'" class = "enemyPosition" points="125,-10 120,-2 130,-2" style="transform:rotate('+deg+'deg)"></polygon>';
+        //document.getElementById("svg").innerHTML += ep;
+        var ep = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        ep.setAttribute("id", "rocket"+id);
+        ep.setAttribute("class", "enemyPosition");
+        ep.setAttribute("points", "125,-10 120,-2 130,-2");
+        ep.setAttribute("fill", "rgba(218,165,32,0.7)")
+        ep.style.transform = "rotate("+deg+"deg)"
+        document.getElementById("svg").appendChild(ep);
+    }
 }
-function freshAll(env, physic, map){
+
+function freshAll(env, physic, map, ui){
     if(!loading){
         keyMotion();
         rocketMove();
+        map.fresh();
+        physic.freshPhysic();
+        arriveDestination(env);
+        limitInBox(destinationPhysic[0]);
+        ui.fresh();
     }
-    arriveDestination(env);
-    limitInBox(destinationPhysic[0]);
-    map.fresh();
-    physic.freshPhysic();
-    freshUI();
 }

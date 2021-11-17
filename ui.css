@@ -9,6 +9,14 @@
 #svg {
     position: absolute; left: 0; top: 0; right: 0; bottom: 0;
     margin: auto;
+    overflow: visible;
+}
+.enemyPosition {
+    /* fill:rgb(218,165,32);  */
+    stroke:rgba(255,255,255,1); 
+    stroke-width:1px; 
+    transform:rotate(0deg); 
+    transform-origin:center center;
 }
 #inf {
     width: 200px; height: 50px;
