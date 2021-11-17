@@ -1,6 +1,6 @@
-var mapSize = [3000,3000,3000], cameraSize = 10000, keyCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, score = [0,0], vOfPlayer = [200,130,60];//
+var mapSize = [3000,3000,3000], cameraSize = 20000, keyCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, score = [0,0], vOfPlayer = [200,130,60];//
 var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = new Array(), bulletPhysics = new Array();
-var playerModule = [], cloudModules = [];
+var playerModule = [], cloudModules = [], texture = [];
 
 function Env(scene,destination,camera,renderer,timeCloud,player){
     this.init = function(){
@@ -46,6 +46,11 @@ function Env(scene,destination,camera,renderer,timeCloud,player){
         scene[0].add(point);
         //点光源添加到场景中
         this.timeCloud();//生成时间云
+        var bgGeometry = new THREE.SphereGeometry(10000, 50, 50);
+        bgGeometry.scale(-1, 1, 1);
+        let bgMaterial = new THREE.MeshBasicMaterial({map: texture[0]});
+        this.bgsphere = new THREE.Mesh(bgGeometry, bgMaterial);
+        scene[0].add(this.bgsphere);//天空球
     }
     this.destinationCube = function (){
         var triangles = 16000;
@@ -218,6 +223,7 @@ function Env(scene,destination,camera,renderer,timeCloud,player){
             timeCloud[i].material.specular.set(0xffffff);
             timeCloud[i].material.opacity = 0.75;
             timeCloud[i].material.transparent = true;
+            timeCloud[i].material.side = THREE.DoubleSide;
             var pos = freshInMap();
             timeCloud[i].position.set(pos[0], pos[1], pos[2]);
             timeCloud[i].receiveShadow = true;
@@ -664,6 +670,9 @@ function moduleLoad(){
             cloudModules.push(obj);
         });
     });
+
+    var textureB = new THREE.TextureLoader().load('./space.jpg');
+    texture.push(textureB);
 }
 function throttle(fn, delay){
     let last = 0, timer = null;
@@ -1044,7 +1053,6 @@ function UI(){
         document.getElementById("svg").appendChild(ep);
     }
 }
-
 function freshAll(env, physic, map, ui){
     if(!loading){
         keyMotion();
@@ -1054,5 +1062,6 @@ function freshAll(env, physic, map, ui){
         arriveDestination(env);
         limitInBox(destinationPhysic[0]);
         ui.fresh();
+        env.bgsphere.position.copy(camera[0].position);
     }
 }

@@ -81,7 +81,7 @@
 
     setInterval("freshAll(env,physic,map,ui)",10);
     checkLoad = setInterval(function () {
-      if((cloudModules.length < 1) || (playerModule.length < 1)){//
+      if((cloudModules.length < 1) || (playerModule.length < 1) || (texture.length < 1)){//
         document.getElementById("load").style.display="";
         //console.log(document.getElementById("load"));
       }
