@@ -446,7 +446,7 @@ function Bullet(position, direction, t){
     },tset);
 }
 function randomRocket(){
-    var max = 1500, min = 400;
+    var max = 2000, min =700;
     var length = (max - min)*Math.random()+min;
     var x = Math.random(), y = Math.random(), z = Math.random();
     var rx = (x*x)/(x*x+y*y+z*z), ry= (y*y)/(x*x+y*y+z*z), rz = (z*z)/(x*x+y*y+z*z);
@@ -475,12 +475,13 @@ function Move(){
         //object.matrixWorldInverse.multiplyMatrices(object.matrixWorld,matrix);
         //console.log(matrix.elements);
         //matrix.transpose(matrix);
-        var worldDirAndDist = this.dirToAim(object, aim), worldVertex = new THREE.Vector3();
+        var worldDirAndDist = this.dirToAim(scene[0], aim), worldVertex = new THREE.Vector3();
         worldVertex.copy(worldDirAndDist[2]);
         var vertex4 = new THREE.Vector4(worldVertex.x, worldVertex.y, worldVertex.z, 1);
-        //console.log(vertex4);
         vertex4.applyMatrix4(matrix);
-        console.log(vertex4);
+        var dir = new THREE.Vector3(vertex4.x, vertex4.y, vertex4.z);
+        dir.normalize();
+        //console.log(Math.tan(Math.PI/3));
 
         // var dir = [];
         // for(var i = 0; i < 4; i++){
@@ -494,7 +495,7 @@ function Move(){
         //dirFinal.normalize();
         //console.log(camera[0].position);
         //console.log(dirFinal);
-        return vertex4;
+        return dir;
     }
     this.goAim = function (object, dir, dist, limitV, deltaV){
         var vo = object.velocity;
@@ -612,6 +613,7 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
         });
         mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
         mesh.position.set(x,y,z);
+        mesh.name = "rocket";
         rocket.push(mesh);
 
         var Octahedron = OctahedronConvex();
@@ -965,12 +967,85 @@ function arriveDestination(env){
         }
     }
 }
-function freshUI(){
-    var pct = 172.7 - (moveEnergy/moveEnergyMax)*172.7;
-    //console.log(document.getElementById("energy"));
-    document.getElementById("energy").setAttribute('stroke-dashoffset',pct);
+function UI(){
+    this.init = function(){
+        this.rockSvgExist = new Array(1024).fill(false);
+    }
+    this.fresh = function(){
+        var pct = 172.7 - (moveEnergy/moveEnergyMax)*172.7;
+        //console.log(document.getElementById("energy"));
+        document.getElementById("energy").setAttribute('stroke-dashoffset',pct);
+
+        document.getElementById("inf").innerHTML = score[0];
+        if((score[0] - score[1]) > 2){
+            destinationPhysic[0].collisionFilterGroup = 2;
+            destinationPhysic[0].collisionFilterGroup = 2;
+            document.getElementById("inf").style.color = "#ff0000";
+            //console.log("success!")
+        }
+
+        for(var i = 0; i < scene[0].children.length; i++){
+            if(scene[0].children[i].name === "rocket"){
+                var id = scene[0].children[i].id, rockExist = true;
+                var dd = move.dirToAim(playerPhysic[0], scene[0].children[i]);
+                var dir = move.dirToAimRelative(camera[0], scene[0].children[i]);
+                var deg = (Math.sqrt(dir.x*dir.x + dir.y*dir.y)/Math.abs(dir.z));
+                if(dir.z < 0 && deg < Math.tan(Math.PI/3)){
+                    rockExist = false;
+                    //console.log(i+" can see!");
+                }
+                else {
+                    if(dd[1] > 800){rockExist = false;}
+                    else {
+                        var len = Math.sqrt(dir.x*dir.x + dir.y*dir.y)
+                        var xydir = [dir.x/len, dir.y/len];
+                        var degflat = Math.atan(xydir[0]/xydir[1]);
+                        if(xydir[1] < 0){degflat = degflat + Math.PI;}
+                        degflat = degflat*(180/Math.PI);
+                    }
+                }
+                if(this.rockSvgExist[id] !== true){
+                    if(rockExist){
+                        //添加进html 
+                        this.genEnemyPosition(id, degflat);
+                        this.rockSvgExist[id] = true;
+                    }
+                }
+                else {
+                    var obj = document.getElementById("rocket"+id);
+                    if(!rockExist){
+                        obj.remove();
+                        this.rockSvgExist[id] = false;
+                    }
+                    else {
+                        obj.style.transform = "rotate("+degflat+"deg)"
+                        //console.log(dd[1]);
+                        if(dd[1] < 200){
+                            obj.setAttribute("fill", 'rgba(255,0,0,0.7)');
+                        }
+                        else {
+                            obj.setAttribute("fill", 'rgba(218,165,32,0.7)');
+                        }
+                        //更新
+                    }
+                }
+            }
+        }
+    }
+    this.genEnemyPosition = function(id, deg){
+        //var ep = '<polygon id="'+'rocket'+id+'" class = "enemyPosition" points="125,-10 120,-2 130,-2" style="transform:rotate('+deg+'deg)"></polygon>';
+        //document.getElementById("svg").innerHTML += ep;
+        var ep = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        ep.setAttribute("id", "rocket"+id);
+        ep.setAttribute("class", "enemyPosition");
+        ep.setAttribute("points", "125,-10 120,-2 130,-2");
+        ep.setAttribute("fill", "rgba(218,165,32,0.7)")
+        ep.style.transform = "rotate("+deg+"deg)"
+        document.getElementById("svg").appendChild(ep);
+    }
 }
-function freshAll(env, physic, map){
+
+function freshAll(env, physic, map, ui){
     if(!loading){
         keyMotion();
         rocketMove();
@@ -978,6 +1053,6 @@ function freshAll(env, physic, map){
         physic.freshPhysic();
         arriveDestination(env);
         limitInBox(destinationPhysic[0]);
-        freshUI();
+        ui.fresh();
     }
 }

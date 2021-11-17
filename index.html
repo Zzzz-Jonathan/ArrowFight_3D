@@ -32,7 +32,7 @@
       <circle r="1" cx="120" cy="120" fill="rgba(255,0,0,0.8)" stroke="rgba(255,0,0,0.8)"></circle>
       <circle r="110" cx="120" cy="120" fill="transparent" stroke="rgba(100,100,100,0.3)" stroke-width="20px" stroke-dasharray="172.7,172.7" stroke-dashoffset="86.35"></circle>
       <circle r="101" cx="120" cy="120" fill="transparent" stroke="rgba(100,100,100,0.3)" stroke-width="2px" stroke-dasharray="640.56" stroke-dashoffset="0"></circle>
-      <circle id="energy" r="110" cx="120" cy="120" fill="transparent" stroke-dashoffset="0"></circle>
+      <circle id="energy" r="110" cx="120" cy="120" fill="transparent" stroke-dashoffset="0" ></circle>
     </svg>
     <div id="load" style="display:none">LOADING</div>
   </div>
@@ -42,7 +42,7 @@
     var env = new Env(scene,destination,camera,renderer,timeCloud,player);
     var physic = new Physic(phyWorld,destinationPhysic,playerPhysic,rocket,rocketPhysic);
     var map = new MiniMap(scene,destination,player,renderer,camera,timeCloudMap);
-    var move = new Move(), engine;
+    var move = new Move(), engine, ui = new UI();
 
     document.addEventListener('mousedown', function(){
       if(document.pointerLockElement !== document.body){
@@ -75,17 +75,11 @@
     const collideTest = throttle(function (event){
       if(event.contact.bj.name === "bullet"){
         score[0] = score[0] + 1;
-        document.getElementById("inf").innerHTML = score[0];
-      }
-      if((score[0] - score[1]) > 2){
-        destinationPhysic[0].collisionFilterGroup = 2;
-        destinationPhysic[0].collisionFilterGroup = 2;
-        document.getElementById("inf").style.color = "#ff0000";
-        //console.log("success!")
+        //document.getElementById("inf").innerHTML = score[0];
       }
     },100);
 
-    setInterval("freshAll(env,physic,map)",10);
+    setInterval("freshAll(env,physic,map,ui)",10);
     checkLoad = setInterval(function () {
       if((cloudModules.length < 1) || (playerModule.length < 1)){//
         document.getElementById("load").style.display="";
@@ -95,6 +89,7 @@
         env.init();
         physic.init();
         map.init();
+        ui.init();
         physic.freshPhysic();
         env.fresh();
         engine = new Engine(camera[0],playerPhysic[0]);
@@ -125,7 +120,7 @@
     },100);
     setInterval(function () {
       //move.dirToAimRelative(camera[0],destinationPhysic[0]);
-      //console.log(player[0],playerModule[0]);
+      //console.log(scene[0]);
     },1000);
   </script>
 </body>
