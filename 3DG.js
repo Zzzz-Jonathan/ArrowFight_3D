@@ -1,4 +1,4 @@
-var mapSize = [3000,3000,3000], cameraSize = 20000, keyCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, score = [0,0], vOfPlayer = [200,130,60];//
+var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, score = [0,0], vOfPlayer = [200,130,60], aOfPlayer = [10,5,5];//
 var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = new Array(), bulletPhysics = new Array();
 var playerModule = [], cloudModules = [], texture = [];
 
@@ -51,6 +51,7 @@ function Env(scene,destination,camera,renderer,timeCloud,player){
         let bgMaterial = new THREE.MeshBasicMaterial({map: texture[0]});
         this.bgsphere = new THREE.Mesh(bgGeometry, bgMaterial);
         scene[0].add(this.bgsphere);//天空球
+        //player[0].material.map = texture[1]; //整活小车代码
     }
     this.destinationCube = function (){
         var triangles = 16000;
@@ -185,6 +186,11 @@ function Env(scene,destination,camera,renderer,timeCloud,player){
             // rocket[i].geometry.pose();
             phyWorld[0].addBody(rocketPhysic[i]);
         }
+        document.getElementById("inf").style.color = "#ffffff";
+        score[1] = score[0];
+        destinationPhysic[0].collisionFilterGroup = 1;
+        destinationPhysic[0].collisionFilterGroup = 1;
+        
         console.log(destination[0]);
     }
     this.setPlayer = function (){
@@ -400,7 +406,7 @@ function Bullet(position, direction, t){
     var vset = 20, tset = 10000;
     var geometry = new THREE.CylinderGeometry(1, 5, 10, 30);
     var material = new THREE.MeshLambertMaterial({
-        color: 0xffffff
+        color: 0xc0c0c0
     });
     bullet_new = new THREE.Mesh(geometry, material); //网格模型对象Mesh
     bullet_new.position.set(position.x, position.y, position.z);
@@ -646,18 +652,30 @@ function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic)
     }
 }
 function moduleLoad(){
-    var OBJLoaderP = new THREE.OBJLoader();//obj加载器
-    var MTLLoaderP = new THREE.MTLLoader();//材质文件加载器
-    MTLLoaderP.load('./player/SciFi_Fighter.mtl', function(materials) {
-        OBJLoaderP.setMaterials(materials);
-        OBJLoaderP.load('./player/SciFi_Fighter.obj', function(obj) {
-            obj.scale.set(5, 5, 5); //放大obj组对象
-            //console.log(obj);
-            playerModule.push(obj);
-            //player[0].rotateY(Math.PI);
-            //player[0].quaternion.copy(camera[0].quaternion);
+    // var OBJLoaderP = new THREE.OBJLoader();//obj加载器
+    // var MTLLoaderP = new THREE.MTLLoader();//材质文件加载器
+    // MTLLoaderP.load('./player/SciFi_Fighter.mtl', function(materials) {
+    //     OBJLoaderP.setMaterials(materials);
+    //     OBJLoaderP.load('./player/SciFi_Fighter.obj', function(obj) {
+    //         obj.scale.set(5, 5, 5); //放大obj组对象
+    //         //console.log(obj);
+    //         playerModule.push(obj);
+    //         //player[0].rotateY(Math.PI);
+    //         //player[0].quaternion.copy(camera[0].quaternion);
+    //     });
+    // });
+
+    var STLLoaderP = new THREE.STLLoader();//stl加载器
+    STLLoaderP.load('./SantaFe.stl', function(obj) {
+        var material = new THREE.MeshPhongMaterial({
+            color: 0x00aa00,
+            shininess:50,
+            specular: 0xddffdd
         });
-    });
+        var mesh = new THREE.Mesh(obj, material);
+        mesh.scale.set(0.7, 0.7, 0.7);
+        playerModule.push(mesh);
+    }); //整活小车代码
 
     var OBJLoaderC = new THREE.OBJLoader();//obj加载器
     var MTLLoaderC = new THREE.MTLLoader();//材质文件加载器
@@ -673,6 +691,8 @@ function moduleLoad(){
 
     var textureB = new THREE.TextureLoader().load('./space.jpg');
     texture.push(textureB);
+    var textureC = new THREE.TextureLoader().load('./space2.jpg');
+    texture.push(textureC);
 }
 function throttle(fn, delay){
     let last = 0, timer = null;
@@ -801,7 +821,7 @@ function Engine(object, objectPhysic){
     this.nX = function (vMax, vDelta){
         this.init();
         var dir = new THREE.Vector3(-1*this.dirx.x, -1*this.dirx.y, -1*this.dirx.z);
-        if((vMax === 0) && (Math.abs(this.vOfx) < 5)){
+        if((vMax === 0) && (Math.abs(this.vOfx) < (vDelta/2+1))){
             if(Math.abs(this.vOfx) > 1){
                 if(this.vOfx > 0){
                     objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*Math.abs(this.vOfx);
@@ -816,7 +836,7 @@ function Engine(object, objectPhysic){
             }
         }
         else {
-            if(Math.abs(this.vOfx - (-1*vMax)) > 5){
+            if(Math.abs(this.vOfx - (-1*vMax)) > (vDelta/2+1)){
                 if(this.vOfx > -1*vMax){
                     objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*vDelta;
                     objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*vDelta;
@@ -833,7 +853,7 @@ function Engine(object, objectPhysic){
     this.pX = function (vMax, vDelta){
         this.init();
         var dir = new THREE.Vector3(this.dirx.x, this.dirx.y, this.dirx.z);
-        if(Math.abs(this.vOfx - vMax) > 5){
+        if(Math.abs(this.vOfx - vMax) > (vDelta/2+1)){
             if(this.vOfx < vMax){
                 objectPhysic.velocity.x = objectPhysic.velocity.x + dir.x*vDelta;
                 objectPhysic.velocity.y = objectPhysic.velocity.y + dir.y*vDelta;
@@ -884,11 +904,11 @@ function keyMotion(){
         //console.log(playerPhysic[0]);
         if(keyCode[87] && !keyCode[83]){
             if(keyCode[32] && (moveEnergy >= 0)){
-                engine.nZ(vOfPlayer[0],10);
+                engine.nZ(vOfPlayer[0],aOfPlayer[0]);
                 moveEnergy = moveEnergy -1;
             }
             else {
-                engine.nZ(vOfPlayer[1],7);
+                engine.nZ(vOfPlayer[1],aOfPlayer[1]);
             }
         }
         if(keyCode[83] && !keyCode[87]){//按下S
@@ -896,21 +916,21 @@ function keyMotion(){
         }
     }
     else {
-        engine.nZ(0,1);
+        engine.nZ(0,0.5);
         //move.goAim(playerPhysic[0], dir, null, 0, 1);
     }
     if(keyCode[65] || keyCode[68]){
         if(keyCode[65] && !keyCode[68]){
-            engine.nX(vOfPlayer[2],4);
+            engine.nX(vOfPlayer[2],aOfPlayer[2]);
         }//按下A
         if(keyCode[68] && !keyCode[65]){
-            engine.pX(vOfPlayer[2],4);
+            engine.pX(vOfPlayer[2],aOfPlayer[2]);
         }//按下D
     }
     else {
-        engine.nX(0,1);
+        engine.nX(0,0.5);
     }
-    engine.pY(0,1);
+    engine.pY(0,0.5);
     if(keyCode[81]){
         //player[0].rotateZ(-0.01);
         camera[0].rotateZ(-0.01);
@@ -931,11 +951,18 @@ function keyMotion(){
     }
 
     engine.init();
-    cameraBehind(-150, -40, engine.vOfx, camera[0], playerPhysic[0]);
+    //cameraBehind(-150, -40, engine.vOfx, camera[0], playerPhysic[0]);
+    cameraBehind(-200, -60, engine.vOfx, camera[0], playerPhysic[0]); //整活小车代码
 
     var rot = new THREE.Quaternion(), dirCamera = new THREE.Quaternion();
     dirCamera.copy(camera[0].quaternion);
-    rot.setFromAxisAngle(new THREE.Vector3(0,1,0), Math.PI);
+
+    //rot.setFromAxisAngle(new THREE.Vector3(0,1,0), Math.PI); //飞机旋转角度
+    var rot2 = new THREE.Quaternion();
+    rot.setFromAxisAngle(new THREE.Vector3(-1,0,0), Math.PI/2);
+    rot2.setFromAxisAngle(new THREE.Vector3(0,0,-1), Math.PI/2);
+    rot.multiply(rot2); //整活小车旋转代码
+
     dirCamera.multiply(rot);
     player[0].quaternion.copy(dirCamera);
     //camera[0].translateZ(500);
@@ -943,16 +970,18 @@ function keyMotion(){
     //camera[0].translateY(500);
 }
 function cameraBehind(x, y, moveSlide, camera, player){
-    var slideSide1 = 30, slideSide2 = 45, lenSlide;
+    var slideSide1 = 30, slideSide2 = 35, lenSlide;
+    //console.log(moveSlidew);
     if(Math.abs(moveSlide) < vOfPlayer[2]){
         lenSlide = (moveSlide/vOfPlayer[2])*slideSide1;
     }
     else {
-        lenSlide = slideSide1 + slideSide2*((moveSlide - vOfPlayer[2])/200);
+        lenSlide = slideSide1 + slideSide2*((Math.abs(moveSlide) - vOfPlayer[2])/200);
         if(moveSlide < 0){
             lenSlide = -1*lenSlide;
         }
     }
+    console.log(lenSlide);
     var poC = camera.position, poP = player.position;
     var matrix = new THREE.Matrix4();
     matrix.copy(camera.matrixWorld);
@@ -970,10 +999,6 @@ function arriveDestination(env){
         if(Math.abs(player[0].position.y - destination[0].position.y) < 50 ){
             if(Math.abs(player[0].position.z - destination[0].position.z) < 50 ){
                 env.fresh();
-                document.getElementById("inf").style.color = "#ffffff";
-                score[1] = score[0];
-                destinationPhysic[0].collisionFilterGroup = 1;
-                destinationPhysic[0].collisionFilterGroup = 1;
             }
         }
     }
