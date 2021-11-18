@@ -972,6 +972,8 @@ function arriveDestination(env){
                 env.fresh();
                 document.getElementById("inf").style.color = "#ffffff";
                 score[1] = score[0];
+                destinationPhysic[0].collisionFilterGroup = 1;
+                destinationPhysic[0].collisionFilterGroup = 1;
             }
         }
     }
@@ -986,7 +988,7 @@ function UI(){
         document.getElementById("energy").setAttribute('stroke-dashoffset',pct);
 
         document.getElementById("inf").innerHTML = score[0];
-        if((score[0] - score[1]) > 2){
+        if((score[0] - score[1]) >= 20){
             destinationPhysic[0].collisionFilterGroup = 2;
             destinationPhysic[0].collisionFilterGroup = 2;
             document.getElementById("inf").style.color = "#ff0000";
