@@ -723,6 +723,17 @@ function init(){
         texture.push(textureB);
         var textureC = new THREE.TextureLoader().load('./space2.jpg');
         texture.push(textureC);
+
+
+        // var FBXLoaderB = new THREE.FBXLoader();
+        // FBXLoaderB.load("./blackhole.fbx",function (obj){
+        //     var material = new THREE.MeshPhongMaterial({
+        //         color: 0xffffff,
+        //     });
+        //     var mesh = new THREE.Mesh(obj, material);
+        //     mesh.scale.set(0.7, 0.7, 0.7);
+        //     playerModule.push(mesh);
+        // });
     }
     function throttle(fn, delay){
         let last = 0, timer = null;
