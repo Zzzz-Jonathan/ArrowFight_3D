@@ -5,7 +5,7 @@ init();
 function init(){
     var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, score = [0,0], vOfPlayer = [200,130,60], aOfPlayer = [10,5,5];//
     var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = new Array(), bulletPhysics = new Array(), toxicPhysic = [];
-    var playerModule = [], cloudModules = [], texture = [];
+    var playerModule = [], cloudModules = [], texture = [], blackholeModules = [];
 
     function Env(scene,destination,camera,renderer,timeCloud,player){
         this.init = function(){
@@ -58,6 +58,7 @@ function init(){
             scene[0].add(this.bgsphere);//天空球
             //player[0].material.map = texture[1]; //整活小车代码
             //this.genToxicCloud();
+            scene[0].add(blackholeModules[0]);
         }
         this.destinationCube = function (){
             var triangles = 16000;
@@ -725,15 +726,14 @@ function init(){
         texture.push(textureC);
 
 
-        // var FBXLoaderB = new THREE.FBXLoader();
-        // FBXLoaderB.load("./blackhole.fbx",function (obj){
-        //     var material = new THREE.MeshPhongMaterial({
-        //         color: 0xffffff,
-        //     });
-        //     var mesh = new THREE.Mesh(obj, material);
-        //     mesh.scale.set(0.7, 0.7, 0.7);
-        //     playerModule.push(mesh);
-        // });
+        var FBXLoaderB = new THREE.FBXLoader();
+        FBXLoaderB.load("./blackhole.fbx",function (obj){
+            //console.log(obj);
+            // for(var i = 0; i < obj.children.length; i++){
+            //     obj.children[i].material.side = THREE.DoubleSide;
+            // }
+            blackholeModules.push(obj);
+        });
     }
     function throttle(fn, delay){
         let last = 0, timer = null;
@@ -1221,7 +1221,7 @@ function init(){
         freshAll(env,physic,map,ui);
     },10);
     var checkLoad = setInterval(function () {
-      if((cloudModules.length < 1) || (playerModule.length < 1) || (texture.length < 1)){//
+      if((cloudModules.length < 1) || (playerModule.length < 1) || (texture.length < 1) || (blackholeModules.length < 1)){//
         document.getElementById("load").style.display="";
         //console.log(document.getElementById("load"));
       }
