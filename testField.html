@@ -18,12 +18,13 @@
          * 创建网格模型
          */
             // var geometry = new THREE.SphereGeometry(60, 40, 40); //创建一个球体几何对象
-        var geometry =new THREE.SphereGeometry(1000, 50, 50);
+        var geometry = new THREE.OctahedronGeometry(20);
+        console.log(geometry);
         //geometry.scale(-1, 1, 1);
         var material = new THREE.MeshLambertMaterial({
             //color: 0x0000ff
             side: THREE.BackSide,
-            map: texture
+            //map: texture
         }); //材质对象Material
         var mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
         scene.add(mesh); //网格模型添加到场景中
@@ -80,17 +81,17 @@
         // var dir = new THREE.Quaternion();
         // dir.setFromEuler(eluer);
 
-        var dir = new THREE.Quaternion();
-        camera.getWorldQuaternion(dir);
-        var rot = new THREE.Quaternion();
-        rot.setFromAxisAngle(new THREE.Vector3(-1,0,0), Math.PI/2);
-        dir.multiply(rot);
+        // var dir = new THREE.Quaternion();
+        // camera.getWorldQuaternion(dir);
+        // var rot = new THREE.Quaternion();
+        // rot.setFromAxisAngle(new THREE.Vector3(-1,0,0), Math.PI/2);
+        // dir.multiply(rot);
 
-        destinationPhysic_new.quaternion.copy(dir);
+        //destinationPhysic_new.quaternion.copy(dir);
         //destinationPhysic_new.quaternion.setFromAxisAngle(new THREE.Vector3(1,0,0), Math.PI/2);
 
-        console.log(dir);
-        console.log(destinationPhysic_new.quaternion);
+        //console.log(dir);
+        //console.log(destinationPhysic_new.quaternion);
         setInterval(function (){
             renderer.render(scene, camera);
             var timeStep = 1 / 100;
