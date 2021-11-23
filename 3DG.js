@@ -515,13 +515,17 @@ function init(){
             //console.log(dir, dist);
             return [dir, dist, vec];
         }
-        this.dirToAimRelative = function(object, aim){
+        this.dist = function (object, aim){
+            var dx = aim.position.x - object.position.x, dy = aim.position.y - object.position.y, dz = aim.position.z - object.position.z;
+            return Math.sqrt(dx*dx+dy*dy+dz*dz);
+        }
+        this.dirToAimRelative = function(object, aim1, aim2){
             var matrix = new THREE.Matrix4();
             matrix.copy(object.matrixWorldInverse);
             //object.matrixWorldInverse.multiplyMatrices(object.matrixWorld,matrix);
             //console.log(matrix.elements);
             //matrix.transpose(matrix);
-            var worldDirAndDist = this.dirToAim(scene[0], aim), worldVertex = new THREE.Vector3();
+            var worldDirAndDist = this.dirToAim(aim1, aim2), worldVertex = new THREE.Vector3();
             worldVertex.copy(worldDirAndDist[2]);
             var vertex4 = new THREE.Vector4(worldVertex.x, worldVertex.y, worldVertex.z, 1);
             vertex4.applyMatrix4(matrix);
@@ -601,7 +605,7 @@ function init(){
         if (intersects.length > 0) {
             for(var i = 0; i < intersects.length; i++){
                 if(intersects[i].distance < dist){
-                    if(intersects[i].object.name === "destination"){
+                    if(intersects[i].object.name === "destination" || intersects[i].object.name === "rocket"){
                         //console.log("catched!");
                         return intersects[i].object;
                     }
@@ -621,6 +625,8 @@ function init(){
                 shape: new CANNON.Box(new CANNON.Vec3(50, 50, 50)), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
                 material: new CANNON.Material({friction: 0.05, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
             });
+            //console.log(destination[0].id);
+            destinationPhysic_new.id = destination[0].id;
             destinationPhysic.push(destinationPhysic_new);
             phyWorld[0].addBody(destinationPhysic[0]);
             //创建物理destination
@@ -630,10 +636,12 @@ function init(){
                 shape: new CANNON.Sphere(30),
                 material: new CANNON.Material({friction: 10, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
             });
+            player_new.id = player[0].id;
             playerPhysic.push(player_new);
             phyWorld[0].addBody(playerPhysic[0]);
-            for(var i = 0; i < 40; i++){
+            for(var i = 0; i < 10; i++){
                 this.genRocket(randomRocket());
+                //this.genRocket([0,0,-1000]);
             }
         }
         this.freshPhysic = function (){
@@ -685,7 +693,8 @@ function init(){
                 shape:  G2B.toB(geometry),
                 material: new CANNON.Material({friction: 0.05, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
             });
-            //console.log(body);
+            body.id = mesh.id;
+            //console.log(body.position);
             rocketPhysic.push(body);
             body.velocity.copy(dir);
             //var euler = new THREE.Euler(dir.x, dir.y, dir.z);
@@ -1030,14 +1039,14 @@ function init(){
             //player[0].rotateZ(0.01);
             camera[0].rotateZ(0.01);
         }//按下E
-        // if(keyCode[82]){
-        //     player[0].rotation.z = 0;
-        //     camera[0].rotation.z = 0;
-        // }//按下R
+        if(keyCode[82]){
+
+        }//按下R
         if(keyCode[67]){
             let last = +new Date();
             if(last - catchedtime > 1000){
                 catchedtime = last;
+                //physic.genRocket([0,0,-1000]);
                 ui.catchShowPosition();
             }
         }//按下C
@@ -1145,7 +1154,7 @@ function init(){
                 if(scene[0].children[i].name === "rocket"){
                     var id = scene[0].children[i].id, rockExist = true;
                     var dd = move.dirToAim(playerPhysic[0], scene[0].children[i]);
-                    var dir = move.dirToAimRelative(camera[0], scene[0].children[i]);
+                    var dir = move.dirToAimRelative(camera[0], scene[0], scene[0].children[i]);
                     var deg = (Math.sqrt(dir.x*dir.x + dir.y*dir.y)/Math.abs(dir.z));
                     if(dir.z < 0 && deg < Math.tan(Math.PI/3)){
                         rockExist = false;
@@ -1178,10 +1187,15 @@ function init(){
                 }
             }//更新rocket指示
 
+            this.checkCatchExist();
+
+            var id = "catched", vid = "Vcatched";
             if(this.catchedObj.length !== 0){
-                var dd = move.dirToAim(player[0], this.catchedObj[0]), id = "catched";
+                //console.log(this.catchedObj);
+                var dd = move.dirToAim(player[0], this.catchedObj[0]);
                 if(dd[1] < 1500){
                     var pos = this.positionOnScreen(this.catchedObj[0]);
+                    var posV = this.posVUI(this.catchedObj[0], pos[0], pos[1]);
                     //console.log(pos);
                     //console.log(pos);
                     var a = window.innerWidth / 2;
@@ -1191,28 +1205,32 @@ function init(){
                             this.haveCatched = true;
                             this.catchedUIType = 1;
                             //创建ui1
-                            this.genCatchedUI(id, pos[0], pos[1]);
+                            this.genCatchedUI(vid, posV[0], posV[1], "rgba(255,0,0,0.6)");
+                            this.genCatchedUI(id, pos[0], pos[1], "rgba(255,255,0,0.6)");
                         }
                         else {
                             var objUI = document.getElementById(id);
+                            var objVUI = document.getElementById(vid);
                             if(this.catchedUIType !== 1){
                                 //var objUI = document.getElementById(id);
                                 this.catchedUIType = 1;
                                 objUI.remove();
                                 //移除ui
                                 //创建ui1
-                                this.genCatchedUI(id, pos[0], pos[1]);
+                                this.genCatchedUI(vid, posV[0], posV[1], "rgba(255,0,0,0.6)");
+                                this.genCatchedUI(id, pos[0], pos[1], "rgba(255,255,0,0.6)");
                             }
                             else {
                                 //更新ui1
                                 //var objUI = document.getElementById(id);
                                 this.freshCatchedUI(objUI, pos[0], pos[1]);
+                                this.freshCatchedUI(objVUI, posV[0], posV[1]);
                             }
                         }
                     }
                     else{
                         //计算deg
-                        var dir = move.dirToAimRelative(camera[0], this.catchedObj[0]);
+                        var dir = move.dirToAimRelative(camera[0],  scene[0], this.catchedObj[0]);
                         var degflat = this.calculDeginWindow(dir);
 
                         if(this.haveCatched === false){
@@ -1223,10 +1241,12 @@ function init(){
                         }
                         else {
                             var objUI = document.getElementById(id);
+                            var objVUI = document.getElementById(vid);
                             if(this.catchedUIType !== 2){
                                 //var objUI = document.getElementById(id);
                                 this.catchedUIType = 2;
                                 objUI.remove();
+                                objVUI.remove();
                                 //移除ui
                                 //创建ui2
                                 this.genEnemyPosition(id, degflat, "120,-25 110,-15 130,-15", "rgba(218,165,32,0.7)");
@@ -1242,11 +1262,38 @@ function init(){
                 else{
                     //移除ui
                     var objUI = document.getElementById(id);
+                    var objVUI = document.getElementById(vid);
                     objUI.remove();
+                    if(objVUI !== null){
+                        objVUI.remove();
+                    }
                     this.catchedObj.pop();
                     this.haveCatched = false;
                 }
             }//更新十字框选指示
+            else {
+                var objUI = document.getElementById(id);
+                var objVUI = document.getElementById(vid);
+                if(objUI !== null){
+                    objUI.remove();
+                }
+                if(objVUI !== null){
+                    objVUI.remove();
+                }
+            }
+        }
+        this.checkCatchExist = function (){
+            //console.log(this.catchedObj.length);
+            if(this.catchedObj.length === 1){
+                var id = this.catchedObj[0].id, flag = false;
+                for(var i = 0; i < scene[0].children.length; i++){
+                    if(scene[0].children[i].id === id){flag = true}
+                }
+                //console.log(flag);
+                if(flag === false){
+                    this.catchedObj.pop();
+                }
+            }
         }
         this.genEnemyPosition = function(id, deg, style, color){
             //var ep = '<polygon id="'+'rocket'+id+'" class = "enemyPosition" points="125,-10 120,-2 130,-2" style="transform:rotate('+deg+'deg)"></polygon>';
@@ -1285,11 +1332,12 @@ function init(){
                 // console.log(pos);
             }
         }//抓取物体
-        this.genCatchedUI = function (id, x, y){
+        this.genCatchedUI = function (id, x, y, color){
             var cu = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
             cu.setAttribute("id", id);
             cu.setAttribute("class", "cross");
             cu.setAttribute("points", "110,120 130,120 120,110 120,130");
+            cu.setAttribute("stroke", color)
             cu.style.transform = "translate("+x+"px,"+y+"px)";
             document.getElementById("svgCenter").appendChild(cu);
             //<polyline id="cross1" points="110,120 130,120 120,110 120,130" stroke-dasharray="19.5,15.1" style="fill:none; stroke:black; stroke-width:2"></polyline>
@@ -1306,6 +1354,32 @@ function init(){
             var x = Math.round(standardVector.x * a);
             var y = Math.round(-standardVector.y * b);//x,y center
             return [x,y,standardVector.z];
+        }
+        this.calculVelocityUI = function (obj){
+            var dist = move.dist(camera[0], obj);
+            var t = dist/1000;
+
+            this.velocityObj = new THREE.Mesh();
+
+            this.velocityObj.position.x = obj.position.x + obj.velocity.x*t;
+            this.velocityObj.position.y = obj.position.y + obj.velocity.y*t;
+            this.velocityObj.position.z = obj.position.z + obj.velocity.z*t;
+        }
+        this.getPhysicItem = function (obj){
+            var id = obj.id;
+            for(var i = 0; i < phyWorld[0].bodies.length; i++){
+                if(phyWorld[0].bodies[i].id === id){
+                    return phyWorld[0].bodies[i];
+                }
+            }
+        }
+        this.posVUI = function (obj, x, y){
+            //var c = 1;
+            var objPhy = this.getPhysicItem(obj);
+            this.calculVelocityUI(objPhy);
+            //console.log(pos[0], pos[1]);
+
+            return this.positionOnScreen(this.velocityObj);
         }
     }
     function freshAll(env, physic, map, ui){
@@ -1340,7 +1414,6 @@ function init(){
     document.addEventListener('mouseup', function(){
       mouseClickTime = new Date() - mouseClickTime;
       env.playerShoot(mouseClickTime);
-      ui.catchShowPosition();
     });
     document.body.addEventListener('mousemove',function(event){
       if (document.pointerLockElement === document.body){
@@ -1406,9 +1479,9 @@ function init(){
       }
     },100);
     setInterval(function () {
-      //move.dirToAimRelative(camera[0],destinationPhysic[0]);
-    //   toxicPhysic[5] = 1;
-    //   console.log(toxicPhysic);
+        //ui.calculVelocityUI(rocketPhysic[0]);
+        //console.log(ui.catchedObj[0].id);
+        //console.log(rocketPhysic[0].position);
     },1000);
 }
 

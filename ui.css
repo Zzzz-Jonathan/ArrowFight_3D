@@ -9,7 +9,7 @@
 .cross {
     stroke-dasharray: 19.5,15.1;
     transform: translate(0,0);
-    fill:none; stroke:yellow; stroke-width:2
+    fill:none; stroke-width:2
 }
 #svgCenter {
     position: absolute; left: 0; top: 0; right: 0; bottom: 0;
