@@ -3,7 +3,7 @@ import {Geometry} from "./Geometry.js";
 init();
 
 function init(){
-    var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, score = [0,0], vOfPlayer = [200,130,60], aOfPlayer = [10,5,5], catchedtime = +new Date();//
+    var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], mouseCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, score = [0,0], vOfPlayer = [200,130,60], aOfPlayer = [10,5,5], catchedtime = +new Date();//
     var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = new Array(), bulletPhysics = new Array(), toxicPhysic = [];
     var playerModule = [], cloudModules = [], texture = [], blackholeModules = [];
 
@@ -186,14 +186,7 @@ function init(){
             for(var i = 0; i < timeCloud.length; i++){
                 timeCloud[i].position.set(Math.random()*mapSize[0]-0.5*mapSize[0],Math.random()*mapSize[1]-0.5*mapSize[1],Math.random()*mapSize[2]-0.5*mapSize[2]);
             }
-            for(i = 0; i < rocket.length; i++){
-                var rd = randomRocket();
-                rocketPhysic[i].position.set(rd[0],rd[1],rd[2]);
-                scene[0].add(rocket[i]);
-                // rocket[i].material.pose();
-                // rocket[i].geometry.pose();
-                phyWorld[0].addBody(rocketPhysic[i]);
-            }
+
             document.getElementById("inf").style.color = "#ffffff";
             score[1] = score[0];
             destinationPhysic[0].collisionMaskGroup = 1;
@@ -276,15 +269,8 @@ function init(){
             //     })
             // })
         }
-        this.playerShoot = function(t){
-            if(!loading){
-                var po = camera[0].position.clone(), ro = new THREE.Vector3();
-                camera[0].getWorldDirection(ro);
-                po.add(ro.multiplyScalar(250));
-                camera[0].getWorldDirection(ro);
-                //console.log(player[0].position, po)
-                Bullet(po, ro, t);
-            }
+        this.genCrystal = function (){
+
         }
         this.genToxicCloud = function(){
             this.toxic = [];
@@ -305,6 +291,26 @@ function init(){
                     this.toxic[i] = false;
                 }
             }
+        }
+    }
+    function Player(playermodule, camera){
+        this.playermodule = playermodule;
+        this.camera = camera;
+
+        this.shoot = function(t){
+            //console.log(this.camera);
+            var po = this.camera.position.clone(), ro = new THREE.Vector3();
+            this.camera.getWorldDirection(ro);
+            po.add(ro.multiplyScalar(250));
+            this.camera.getWorldDirection(ro);
+            //console.log(player[0].position, po)
+            weapon.bullet(po, ro, t);
+        }
+        this.launchRocket = function (aim){
+            var po = this.playermodule.position.clone(), ro = new THREE.Vector3();
+            this.camera.getWorldDirection(ro);
+            po.add(ro.multiplyScalar(100));
+            weapon.rocket([po.x, po.y, po.z], aim);
         }
     }
     function freshInMap(){
@@ -434,63 +440,6 @@ function init(){
             camera[1].lookAt(new THREE.Vector3(0,0,0));
         }
     }
-    function Bullet(position, direction, t){
-        var vset = 1000, tset = 10000;
-        var geometry = new THREE.CylinderGeometry(1, 5, 10, 30);
-        var material = new THREE.MeshLambertMaterial({
-            color: 0xc0c0c0
-        });
-        var bullet_new = new THREE.Mesh(geometry, material); //网格模型对象Mesh
-        bullet_new.position.set(position.x, position.y, position.z);
-        bullet_new.name = 'bullet';
-        //生成bullet图像，并初始化位置
-
-        var body = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
-            mass: 10, //刚体的质量，这里单位为kg
-            position: new CANNON.Vec3(position.x, position.y, position.z), //刚体的位置，单位是米
-            shape: new CANNON.Cylinder(1, 5, 10, 10),
-            material: new CANNON.Material({friction: 0.01, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
-        });
-        //console.log(body);
-        body.name = "bullet";
-        //console.log(body.name);
-        var dir_camera = new THREE.Quaternion();
-        camera[0].getWorldQuaternion(dir_camera);
-        var rot = new THREE.Quaternion();
-        rot.setFromAxisAngle(new THREE.Vector3(-1,0,0), Math.PI/2);
-        dir_camera.multiply(rot);
-        //console.log(body)
-        //body.quaternion.copy(direction);
-        body.quaternion.copy(dir_camera);
-        bullet_new.quaternion.copy(dir_camera);
-        //body.quaternion.normalize();
-        //body.quaternion.z = body.quaternion.z - Math.PI/2;
-        // body.quaternion.setFromAxisAngle(direction.x, direction.y);
-        // body.quaternion.normalize();
-        body.velocity.copy(direction.multiplyScalar(vset));
-
-        //console.log(direction);
-        scene[0].add(bullet_new);
-        phyWorld[0].addBody(body);
-        bullet.push(bullet_new);
-        bulletPhysics.push(body);
-
-        // if((tset*t)/1000 <20){
-        //     tset = tset*t;
-        // }
-        // else{
-        //     tset = 20000;
-        // }
-
-        setTimeout(function(){
-            var outBullet = bullet.shift();
-            var outBulletBody = bulletPhysics.shift();
-            scene[0].remove(outBullet);
-            outBullet.material.dispose();
-            outBullet.geometry.dispose();
-            phyWorld[0].removeBody(outBulletBody);
-        },tset);
-    }
     function randomRocket(){
         var max = 2000, min =700;
         var length = (max - min)*Math.random()+min;
@@ -583,20 +532,6 @@ function init(){
             return [dist, v];
         }
     }
-    function rocketMove(){
-        for(var i = 0; i < rocket.length; i++){
-            var dd = move.dirToAim(rocketPhysic[i], playerPhysic[0]);
-            var dir = dd[0], dist = dd[1];
-            dist = move.goAim(rocketPhysic[i],dir,dist,100,5);
-            //console.log(rocketPhysic[i].velocity);
-            if(dist[0] < 55){
-                scene[0].remove(rocket[i]);
-                rocket[i].material.dispose();
-                rocket[i].geometry.dispose();
-                phyWorld[0].removeBody(rocketPhysic[i]);
-            }
-        }
-    }
     function rayCaster(posV2, dist){
         var raycaster = new THREE.Raycaster();//光线投射器
         raycaster.setFromCamera(posV2, camera[0]);
@@ -639,10 +574,6 @@ function init(){
             player_new.id = player[0].id;
             playerPhysic.push(player_new);
             phyWorld[0].addBody(playerPhysic[0]);
-            for(var i = 0; i < 10; i++){
-                this.genRocket(randomRocket());
-                //this.genRocket([0,0,-1000]);
-            }
         }
         this.freshPhysic = function (){
             var timeStep = 1.0 / 100.0;
@@ -669,45 +600,6 @@ function init(){
                 rocket[i].quaternion.copy(rocketPhysic[i].quaternion);
             }
             //console.log(destinationPhysic[0].position);
-        }
-        this.genRocket = function ([x,y,z]){
-            var p = player[0].position;
-            var dir = new THREE.Vector3(p.x-x, p.y-y, p.z-z);
-            dir = dir.normalize();
-            //var geometry = new THREE.OctahedronGeometry(20);
-            var geometry = new THREE.SphereGeometry(20,2,2);
-            var material = new THREE.MeshPhongMaterial({
-                color: 0xff5809,
-                shininess:50,
-                specular: 0xff2222
-            });
-            var mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
-            //console.log(mesh);
-            mesh.position.set(x,y,z);
-            mesh.name = "rocket";
-            rocket.push(mesh);
-
-            var body = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
-                mass: 20, //刚体的质量，这里单位为kg
-                position: new CANNON.Vec3(x, y, z), //刚体的位置，单位是米
-                shape:  G2B.toB(geometry),
-                material: new CANNON.Material({friction: 0.05, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
-            });
-            body.id = mesh.id;
-            //console.log(body.position);
-            rocketPhysic.push(body);
-            body.velocity.copy(dir);
-            //var euler = new THREE.Euler(dir.x, dir.y, dir.z);
-            // var dir_v = new THREE.Quaternion();
-            // dir_v.setFromEuler(new THREE.Euler(dir.x, dir.y, dir.z));
-            // var rot = new THREE.Quaternion();
-            // rot.setFromAxisAngle(new THREE.Vector3(-1,0,0), Math.PI/2);
-            // dir_v.multiply(rot);
-            // body.quaternion.copy(dir_v);
-            // mesh.quaternion.copy(dir_v);
-
-            scene[0].add(mesh);
-            phyWorld[0].addBody(body);
         }
     }
     function moduleLoad(){
@@ -998,6 +890,15 @@ function init(){
     function keyMotion(){
         // var dir = new THREE.Vector3();
         // camera[0].getWorldDirection(dir);
+        if(mouseCode[0]){
+            var t = new Date() - mouseClickTime;
+            if(t > 300 && moveEnergy > 0){
+                mouseClickTime = new Date();
+                playerOption.shoot();
+                moveEnergy = moveEnergy - 5;
+            }
+        }
+
         if(keyCode[87] || keyCode[83]){//按下W
             //console.log(playerPhysic[0]);
             if(keyCode[87] && !keyCode[83]){
@@ -1051,7 +952,7 @@ function init(){
             }
         }//按下C
 
-        if((moveEnergy < moveEnergyMax) && (!keyCode[32] || !keyCode[87])){
+        if((moveEnergy < moveEnergyMax) && (!keyCode[32] || !keyCode[87]) && (!mouseCode[0] && new Date() - mouseClickTime > 500)){
             moveEnergy = moveEnergy + 0.5;
         }
 
@@ -1073,6 +974,161 @@ function init(){
         //camera[0].translateZ(500);
         //camera[0].lookAt(player[0].position);
         //camera[0].translateY(500);
+    }
+    function AI(){
+        this.nextStep = function () {
+
+        }
+    }
+    function Weapon(){
+        this.bullet = function (position, direction, t){
+            var vset = 1000, tset = 10000;
+            var geometry = new THREE.CylinderGeometry(1, 5, 10, 30);
+            var material = new THREE.MeshLambertMaterial({
+                color: 0xc0c0c0
+            });
+            var bullet_new = new THREE.Mesh(geometry, material); //网格模型对象Mesh
+            bullet_new.position.set(position.x, position.y, position.z);
+            bullet_new.name = 'bullet';
+            //生成bullet图像，并初始化位置
+
+            var body = genDamageObject(bullet_new.id, bullet_new.name, 114, position, "ball");
+
+            var dir_camera = new THREE.Quaternion();
+            camera[0].getWorldQuaternion(dir_camera);
+            var rot = new THREE.Quaternion();
+            rot.setFromAxisAngle(new THREE.Vector3(-1,0,0), Math.PI/2);
+            dir_camera.multiply(rot);
+            //console.log(body)
+            //body.quaternion.copy(direction);
+            body.quaternion.copy(dir_camera);
+            bullet_new.quaternion.copy(dir_camera);
+            //body.quaternion.normalize();
+            //body.quaternion.z = body.quaternion.z - Math.PI/2;
+            // body.quaternion.setFromAxisAngle(direction.x, direction.y);
+            // body.quaternion.normalize();
+            body.velocity.copy(direction.multiplyScalar(vset));
+
+            //console.log(direction);
+            scene[0].add(bullet_new);
+            phyWorld[0].addBody(body);
+            bullet.push(bullet_new);
+            bulletPhysics.push(body);
+
+            // if((tset*t)/1000 <20){
+            //     tset = tset*t;
+            // }
+            // else{
+            //     tset = 20000;
+            // }
+
+            setTimeout(function(){
+                var outBullet = bullet.shift();
+                var outBulletBody = bulletPhysics.shift();
+                deletObject(outBulletBody);
+            },tset);
+        }
+        this.rocket = function ([x, y, z], aimid){
+            var tset = 20000;
+            //var geometry = new THREE.OctahedronGeometry(20);
+            var geometry = new THREE.SphereGeometry(20,2,2);
+            var material = new THREE.MeshPhongMaterial({
+                color: 0xff5809,
+                shininess:50,
+                specular: 0xff2222
+            });
+            var mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
+            //console.log(mesh);
+            mesh.position.set(x,y,z);
+            mesh.name = "rocket";
+            rocket.push(mesh);
+
+            var body = genDamageObject(mesh.id, mesh.name, 514, mesh.position, "box");
+            body.aimid = aimid;
+            //console.log(body.position);
+            rocketPhysic.push(body);
+            //var euler = new THREE.Euler(dir.x, dir.y, dir.z);
+            // var dir_v = new THREE.Quaternion();
+            // dir_v.setFromEuler(new THREE.Euler(dir.x, dir.y, dir.z));
+            // var rot = new THREE.Quaternion();
+            // rot.setFromAxisAngle(new THREE.Vector3(-1,0,0), Math.PI/2);
+            // dir_v.multiply(rot);
+            // body.quaternion.copy(dir_v);
+            // mesh.quaternion.copy(dir_v);
+
+            scene[0].add(mesh);
+            phyWorld[0].addBody(body);
+
+            setTimeout(function(){
+                var outRocket = rocket.shift();
+                var outRocketBody = rocketPhysic.shift();
+                deletObject(outRocketBody);
+            },tset);
+        }
+        this.rocketMove = function (){
+            for(var i = 0; i < rocket.length; i++){
+                var obj = getObject(rocketPhysic[i].aimid);
+                var dd = move.dirToAim(rocketPhysic[i], obj[1]);
+                var dir = dd[0], dist = dd[1];
+                dist = move.goAim(rocketPhysic[i],dir,dist,100,5);
+                //console.log(rocketPhysic[i].velocity);
+                if(dist[0] < 55){
+                    deletObject(rocketPhysic[i]);
+                }
+            }
+        }
+    }
+    function genDamageObject(id, name, damage, pos, type){
+        if(type === "ball"){
+            var body = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
+                mass: 10, //刚体的质量，这里单位为kg
+                position: new CANNON.Vec3(pos.x, pos.y, pos.z), //刚体的位置，单位是米
+                shape: new CANNON.Sphere(5),
+                material: new CANNON.Material({friction: 0.01, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
+            });
+
+            body.name = name;
+            body.id = id;
+            body.damage = damage;
+            //console.log(body);
+            return body;
+        }
+        if(type === "box"){
+            var body = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
+                mass: 10, //刚体的质量，这里单位为kg
+                position: new CANNON.Vec3(pos.x, pos.y, pos.z), //刚体的位置，单位是米
+                shape: new CANNON.Box(new CANNON.Vec3(15, 15, 15)), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
+                material: new CANNON.Material({friction: 0.01, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
+            });
+
+            body.name = name;
+            body.id = id;
+            body.damage = damage;
+            return body;
+        }
+    }
+    function deletObject(objet){
+        var id = objet.id;
+        var objs = getObject(id);
+        if(objs[0] != null && objs[1] != null){
+            scene[0].remove(objs[0]);
+            phyWorld[0].removeBody(objs[1]);
+        }
+        //console.log(objs);
+    }
+    function getObject(id){
+        var mesh, body;
+        for(var i = 0; i < scene[0].children.length; i++){
+            if(scene[0].children[i].id === id){
+                mesh = scene[0].children[i];
+            }
+        }
+        for(var i = 0; i < phyWorld[0].bodies.length; i++){
+            if(phyWorld[0].bodies[i].id === id){
+                body = phyWorld[0].bodies[i];
+            }
+        }
+        return [mesh, body];
     }
     function cameraBehind(x, y, moveSlide, ySlide, camera, player){
         // var gg = deepClone(playerModule[0].children[0]);
@@ -1291,6 +1347,7 @@ function init(){
                 }
                 //console.log(flag);
                 if(flag === false){
+                    this.haveCatched = false;
                     this.catchedObj.pop();
                 }
             }
@@ -1385,7 +1442,7 @@ function init(){
     function freshAll(env, physic, map, ui){
         if(!loading){
             keyMotion();
-            rocketMove();
+            weapon.rocketMove();
             map.fresh();
             physic.freshPhysic();
             arriveDestination(env);
@@ -1400,20 +1457,35 @@ function init(){
     var env = new Env(scene,destination,camera,renderer,timeCloud,player);
     var physic = new Physic(phyWorld,destinationPhysic,playerPhysic,rocket,rocketPhysic);
     var map = new MiniMap(scene,destination,player,renderer,camera,timeCloudMap);
-    var move = new Move(), engine, ui = new UI(), G2B = new FronGemotryToBody();
+    var move = new Move(), engine, ui = new UI(), G2B = new FronGemotryToBody(), weapon = new Weapon(), playerOption;
 
-    document.addEventListener('mousedown', function(){
-      if(document.pointerLockElement !== document.body){
-        document.body.requestPointerLock();
-        mouseClickTime = new Date();
-      }
-      else{
-        mouseClickTime = new Date();
-      }
+    document.oncontextmenu = function(){return false};
+    document.addEventListener('mousedown', function(event){
+        if(document.pointerLockElement !== document.body){
+            document.body.requestPointerLock();
+        }
+        if(event.button === 0){
+            mouseCode[0] = true;
+            if(new Date() - mouseClickTime > 300){
+                mouseClickTime = new Date() - 310;
+            }
+        }
+        if(event.button === 2){
+            event.preventDefault();
+        }
     });
-    document.addEventListener('mouseup', function(){
-      mouseClickTime = new Date() - mouseClickTime;
-      env.playerShoot(mouseClickTime);
+    document.addEventListener('mouseup', function(event){
+        if(event.button === 0){
+            mouseCode[0] = false;
+            // mouseClickTime = new Date() - mouseClickTime;
+            // playerOption.shoot(mouseClickTime);
+        }
+        if(event.button === 2){
+            event.preventDefault();
+            if(ui.catchedObj[0] !== undefined){
+                playerOption.launchRocket(ui.catchedObj[0].id);
+            }
+        }
     });
     document.body.addEventListener('mousemove',function(event){
       if (document.pointerLockElement === document.body){
@@ -1453,6 +1525,7 @@ function init(){
         physic.freshPhysic();
         env.fresh();
         engine = new Engine(camera[0],playerPhysic[0]);
+        playerOption  = new Player(player[0], camera[0]);
         //engine.init();
         //console.log(player[0])
         render();
@@ -1461,9 +1534,9 @@ function init(){
         document.getElementById("svgCenter").style.display="";
         loading = false;
 
-        for(var i = 0; i < rocketPhysic.length; i++){
-          rocketPhysic[i].addEventListener("collide", collideTest);
-        }
+        // for(var i = 0; i < rocketPhysic.length; i++){
+        //   rocketPhysic[i].addEventListener("collide", collideTest);
+        // }
         window.onresize=function(){
           // 重置渲染器输出画布canvas尺寸
           renderer[0].setSize(window.innerWidth,window.innerHeight);
@@ -1479,9 +1552,8 @@ function init(){
       }
     },100);
     setInterval(function () {
-        //ui.calculVelocityUI(rocketPhysic[0]);
-        //console.log(ui.catchedObj[0].id);
-        //console.log(rocketPhysic[0].position);
+        //console.log(ui.catchedObj[0]);
+        console.log(moveEnergy);
     },1000);
 }
 
