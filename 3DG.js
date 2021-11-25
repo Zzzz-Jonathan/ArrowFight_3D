@@ -3,11 +3,12 @@ import {Geometry} from "./Geometry.js";
 init();
 
 function init(){
-    var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], mouseCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, score = [0,0], vOfPlayer = [200,130,60], aOfPlayer = [10,5,5], catchedtime = +new Date();//
-    var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = new Array(), bulletPhysics = new Array(), toxicPhysic = [];
+    var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], mouseCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, crystalNum = 5, vOfPlayer = [200,130,60], aOfPlayer = [10,5,5], catchedtime = +new Date();//
+    var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = [], bulletPhysic = [], toxicPhysic = [];
+    var crystal = [], crystalPhysic = [];
     var playerModule = [], cloudModules = [], texture = [], blackholeModules = [];
 
-    function Env(scene,destination,camera,renderer,timeCloud,player){
+    function Env(scene,destination,camera,renderer,timeCloud,player,crystal){
         this.init = function(){
             var scene_new = new THREE.Scene();
             scene.push(scene_new);
@@ -166,6 +167,7 @@ function init(){
             });
 
             var mesh = new THREE.Mesh( geometry, material);
+            mesh.uid = idGenerator.gen("destination");
             mesh.name = "destination";
             return mesh;
         }
@@ -181,16 +183,29 @@ function init(){
             document.getElementById("game").appendChild(renderer[0].domElement); //body元素中插入canvas对象
         }
         this.fresh = function(){
-            destinationPhysic[0].position.set(Math.random()*mapSize[0]-0.5*mapSize[0],Math.random()*mapSize[1]-0.5*mapSize[1],Math.random()*mapSize[2]-0.5*mapSize[2]);
+            var pos = freshInMap();
+            destinationPhysic[0].position.set(pos[0], pos[1], pos[2]);
             //在map的范围内随机移动了destination
             for(var i = 0; i < timeCloud.length; i++){
-                timeCloud[i].position.set(Math.random()*mapSize[0]-0.5*mapSize[0],Math.random()*mapSize[1]-0.5*mapSize[1],Math.random()*mapSize[2]-0.5*mapSize[2]);
+                pos = freshInMap();
+                timeCloud[i].position.set(pos[0], pos[1], pos[2]);
+            }
+
+            for(var i = 0; i < crystal.length; i++){
+                pos = freshInMap();
+                crystalPhysic[i].position.set(pos[0], pos[1], pos[2]);
             }
 
             document.getElementById("inf").style.color = "#ffffff";
-            score[1] = score[0];
+            //score[1] = score[0];
             destinationPhysic[0].collisionMaskGroup = 1;
             destinationPhysic[0].collisionFilterGroup = 1;
+
+            var num = crystal.length;
+            for(var i = 0; i < crystalNum - num; i++){
+                enemyGenerator.genCrystal(crystal, crystalPhysic, freshInMap());
+                scene[1].add(map.crystal[i]);
+            }
             
             console.log(destination[0]);
         }
@@ -201,6 +216,7 @@ function init(){
             player.push(mesh);
             scene[0].add(player[0]);
             player[0].position.set(0,0,0);
+            player[0].uid = idGenerator.gen("player");
             //console.log();
             //player[0].children[0].material.wireframe = true;
 
@@ -269,9 +285,6 @@ function init(){
             //     })
             // })
         }
-        this.genCrystal = function (){
-
-        }
         this.genToxicCloud = function(){
             this.toxic = [];
             var p = 0.2;
@@ -313,9 +326,207 @@ function init(){
             weapon.rocket([po.x, po.y, po.z], aim);
         }
     }
+    function Enemy(){
+        this.init = function (){
+            for(var i = 0; i < crystalNum; i++){
+                enemyGenerator.genCrystal(crystal,crystalPhysic, freshInMap());
+            }
+        }
+        this.genCrystal = function (crystal, crystalPhysic, [posx, posy, posz]){
+            var triangles = 160;
+
+            var geometry = new THREE.BufferGeometry();
+            var positions = new Float32Array( triangles * 3 * 3);
+            var normals = new Float32Array( triangles * 3 * 3);
+            var colors = new Float32Array( triangles * 3 * 3);
+
+            var color = new THREE.Color();
+
+            var n = 50, n2 = n/2;
+            var d = 25, d2 = d/2;
+
+            var pA = new THREE.Vector3();
+            var pB = new THREE.Vector3();
+            var pC = new THREE.Vector3();
+
+            var cb = new THREE.Vector3();
+            var ab = new THREE.Vector3();
+
+            for( var i = 0; i < positions.length; i += 9 ) {
+                var x = Math.random() * n - n2;
+                var y = Math.random() * (n2 - Math.abs(x));
+                if(Math.random() < 0.5){
+                    y = -1*y;
+                }
+                var z = Math.random() * (n2 - Math.abs(x) - Math.abs(y));
+                if(Math.random() < 0.5){
+                    z = -1*z;
+                }
+
+                var ax = x + Math.random() * d - d2;
+                var ay = y + Math.random() * d - d2;
+                var az = z + Math.random() * d - d2;
+
+                var bx = x + Math.random() * d - d2;
+                var by = y + Math.random() * d - d2;
+                var bz = z + Math.random() * d - d2;
+
+                var cx = x + Math.random() * d - d2;
+                var cy = y + Math.random() * d - d2;
+                var cz = z + Math.random() * d - d2;
+
+                positions[i] = ax;
+                positions[i + 1] = ay;
+                positions[i + 2] = az;
+
+                positions[i + 3] = bx;
+                positions[i + 4] = by;
+                positions[i + 5] = bz;
+
+                positions[i + 6] = cx;
+                positions[i + 7] = cy;
+                positions[i + 8] = cz;
+
+                pA.set(ax, ay, az);
+                pB.set(bx, by, bz);
+                pC.set(cx, cy, cz);
+
+                cb.subVectors(pC, pB);
+                ab.subVectors(pA, pB);
+                cb.cross(ab);
+
+                cb.normalize();
+                //法向量的方向可以这样表示N(nx, ny, nz);
+                var nx = cb.x;
+                var ny = cb.y;
+                var nz = cb.z;
+
+                normals[i]     = nx;
+                normals[i + 1] = ny;
+                normals[i + 2] = nz;
+
+                normals[i + 3] = nx;
+                normals[i + 4] = ny;
+                normals[i + 5] = nz;
+
+                normals[i + 6] = nx;
+                normals[i + 7] = ny;
+                normals[i + 8] = nz;
+                //颜色用rgb表示, rgb每一个分量取值范围0-1,vx,vy,vz分别对应rgb值。
+                var vx = (x/n) + 0.5;
+                var vy = (y/n) + 0.5;
+                var vz = (z/n) + 0.5;
+
+                color.setRGB(vx, vy, vz);
+                //将三角形的三个顶点设为同样的颜色
+                colors[i] = color.r;
+                colors[i + 1] = color.g;
+                colors[i + 2] = color.b;
+
+                colors[i + 3] = color.r;
+                colors[i + 4] = color.g;
+                colors[i + 5] = color.b;
+
+                colors[i + 6] = color.r;
+                colors[i + 7] = color.g;
+                colors[i + 8] = color.b;
+            }
+            //console.log(colors);
+
+            geometry.setAttribute('position', new THREE.BufferAttribute( positions, 3));
+            geometry.setAttribute('normal', new THREE.BufferAttribute( normals, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute( colors, 3));
+            geometry.colorOrgin = colors;
+
+            geometry.computeBoundingSphere();
+
+            var material = new THREE.MeshPhongMaterial({
+                color : 0xaaaaaa, ambient : 0xaaaaaa, specular : 0xffffff, shininess : 250,
+                side : THREE.DoubleSide, vertexColors : THREE.VertexColors
+            });
+
+            var mesh = new THREE.Mesh( geometry, material);
+            mesh.position.set(posx, posy, posz);
+            mesh.name = "crystal";
+            mesh.uid = idGenerator.gen("crystal");
+            
+            var body = genHitpointObject(mesh.uid, mesh.name, 0, 1000, 1000, mesh.position, "box");
+            
+
+            scene[0].add(mesh);
+            phyWorld[0].addBody(body);
+            crystal.push(mesh);
+            crystalPhysic.push(body);
+        }
+        this.fadeWithHp = function (id){
+            var obj = getObject(id);
+            var health = obj[1].hitpoint/obj[1].hitpointMax;
+            var zeroLength = Math.ceil(health*obj[0].geometry.colorOrgin.length/3);
+            var colorNew = new Float32Array( obj[0].geometry.colorOrgin.length), color = new THREE.Color();
+            for(var i = 0; i < obj[0].geometry.colorOrgin.length; i += 3){
+                if(i > zeroLength){
+                    color.setRGB(1, 1, 1);
+                    colorNew[i] = color.r;
+                    colorNew[i+1] = color.g;
+                    colorNew[i+2] = color.b;
+                }
+                else {
+                    color.setRGB(obj[0].geometry.colorOrgin[i], obj[0].geometry.colorOrgin[i+1], obj[0].geometry.colorOrgin[i+2]);
+                    colorNew[i] = color.r;
+                    colorNew[i+1] = color.g;
+                    colorNew[i+2] = color.b;
+                }
+            }
+            obj[0].geometry.setAttribute('color', new THREE.BufferAttribute( colorNew, 3));
+        }
+    }
     function freshInMap(){
         var x = Math.random()*mapSize[0]-0.5*mapSize[0], y = Math.random()*mapSize[1]-0.5*mapSize[1], z = Math.random()*mapSize[2]-0.5*mapSize[2];
         return [x, y, z];
+    }
+    function IdGenerator(){
+        this.destination = [0,0,9];
+        this.player = [10,10,19];
+        this.bullet = [400,400,799];
+        this.rocket = [800,800,899];
+        this.crystal = [50,50,59];
+        this.gen = function (type){
+            if(type === "destination"){
+                this.destination[0] = this.destination[0] + 1;
+                if(this.destination[0] > this.destination[2]){
+                    this.destination[0] = this.destination[0] - (this.destination[2] - this.destination[1] + 1);
+                }
+                return this.destination[0];
+            }
+            if(type === "player"){
+                this.player[0] = this.player[0] + 1;
+                if(this.player[0] > this.player[2]){
+                    this.player[0] = this.player[0] - (this.player[2] - this.player[1] + 1);
+                }
+                return this.player[0];
+            }
+            if(type === "bullet"){
+                this.bullet[0] = this.bullet[0] + 1;
+                if(this.bullet[0] > this.bullet[2]){
+                    this.bullet[0] = this.bullet[0] - (this.bullet[2] - this.bullet[1] + 1);
+                }
+                return this.bullet[0];
+            }
+            if(type === "rocket"){
+                this.rocket[0] = this.rocket[0] + 1;
+                if(this.rocket[0] > this.rocket[2]){
+                    this.rocket[0] = this.rocket[0] - (this.rocket[2] - this.rocket[1] + 1);
+                }
+                return this.rocket[0];
+            }
+            if(type === "crystal"){
+                this.crystal[0] = this.crystal[0] + 1;
+                if(this.crystal[0] > this.crystal[2]){
+                    this.crystal[0] = this.crystal[0] - (this.crystal[2] - this.crystal[1] + 1);
+                }
+                return this.crystal[0];
+            }
+        }
     }
     function limitInBox(object){
         var x = object.position.x, y = object.position.y, z = object.position.z;
@@ -347,9 +558,19 @@ function init(){
     function MiniMap(scene, destination, player, renderer, camera, timeCloudMap){
         this.init = function (){
             this.miniMapSize = [100,100,100];
+            this.crystal = [];
             var map = new THREE.Scene();
             scene.push(map);
             // var geometry = new THREE.SphereGeometry(60, 40, 40); //创建一个球体几何对象
+            for(var i = 0; i < crystal.length; i++){
+                var geometryc = new THREE.OctahedronGeometry(4);
+                var materialc = new THREE.MeshLambertMaterial({
+                    color: 0xff00ff
+                }); //材质对象Material
+                var mesh = new THREE.Mesh(geometryc, materialc);
+                scene[1].add(mesh);
+                this.crystal.push(mesh);
+            }
             var geometry1 = new THREE.BoxGeometry(10, 10, 10); //创建一个立方体几何对象Geometry
             var material1 = new THREE.MeshLambertMaterial({
                 color: 0xff0000
@@ -416,14 +637,17 @@ function init(){
             if(dy < 0){ly = -ly;}
             if(dz < 0){lz = -lz;}
 
-            // var pLocal = new THREE.Vector3(0, 0, -1);
-            // var pWorld = pLocal.applyMatrix4(camera[0].matrixWorld);
-            // var dir = pWorld.sub(camera[0].position).normalize();
-            // if(keyCode[87]){
-            //     dir.x = -1*dir.x;
-            //     dir.y = -1*dir.y;
-            //     dir.z = -1*dir.z;
-            // }
+            for(var i = 0; i < this.crystal.length; i++){
+                //console.log(crystal[i]);
+                if(i < crystal.length){
+                    var mcx = (crystal[i].position.x/mapSize[0])*this.miniMapSize[0], mcy = (crystal[i].position.y/mapSize[1])*this.miniMapSize[1], mcz = (crystal[i].position.z/mapSize[2])*this.miniMapSize[2];
+                    this.crystal[i].position.set(mcx, mcy, mcz);
+                }
+                else {
+                    scene[1].remove(this.crystal[i]);
+                }
+            }
+
             var dir = new THREE.Vector3();
             camera[0].getWorldDirection(dir);
             //console.log(dir);
@@ -540,7 +764,8 @@ function init(){
         if (intersects.length > 0) {
             for(var i = 0; i < intersects.length; i++){
                 if(intersects[i].distance < dist){
-                    if(intersects[i].object.name === "destination" || intersects[i].object.name === "rocket"){
+                    var name = intersects[i].object.name;
+                    if(name === "destination" || name === "rocket" || name === "crystal"){
                         //console.log("catched!");
                         return intersects[i].object;
                     }
@@ -548,7 +773,7 @@ function init(){
             }
         }
     }
-    function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic){
+    function Physic(phyWorld, destinationPhysic, playerPhysic, rocket, rocketPhysic,crystal,crystalPhysic){
         this.init = function (){
             var world_new = new CANNON.World();
             phyWorld.push(world_new);
@@ -561,7 +786,7 @@ function init(){
                 material: new CANNON.Material({friction: 0.05, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
             });
             //console.log(destination[0].id);
-            destinationPhysic_new.id = destination[0].id;
+            destinationPhysic_new.id = destination[0].uid;
             destinationPhysic.push(destinationPhysic_new);
             phyWorld[0].addBody(destinationPhysic[0]);
             //创建物理destination
@@ -571,7 +796,7 @@ function init(){
                 shape: new CANNON.Sphere(30),
                 material: new CANNON.Material({friction: 10, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
             });
-            player_new.id = player[0].id;
+            player_new.id = player[0].uid;
             playerPhysic.push(player_new);
             phyWorld[0].addBody(playerPhysic[0]);
         }
@@ -585,8 +810,8 @@ function init(){
             playerPhysic[0].quaternion.copy(player[0].quaternion);//更新playerPhysic
 
             for(var i = 0; i < bullet.length; i++){
-                bullet[i].position.copy(bulletPhysics[i].position);
-                bullet[i].quaternion.copy(bulletPhysics[i].quaternion);
+                bullet[i].position.copy(bulletPhysic[i].position);
+                bullet[i].quaternion.copy(bulletPhysic[i].quaternion);
             }
             for(i = 0; i < rocket.length; i++){
                 // var dir = rocketPhysic[i].velocity;
@@ -598,6 +823,10 @@ function init(){
                 // rocketPhysic[i].quaternion.copy(dir_v);
                 rocket[i].position.copy(rocketPhysic[i].position);
                 rocket[i].quaternion.copy(rocketPhysic[i].quaternion);
+            }
+            for(i = 0; i < crystal.length; i++){
+                crystal[i].position.copy(crystalPhysic[i].position);
+                crystal[i].quaternion.copy(crystalPhysic[i].quaternion);
             }
             //console.log(destinationPhysic[0].position);
         }
@@ -989,10 +1218,11 @@ function init(){
             });
             var bullet_new = new THREE.Mesh(geometry, material); //网格模型对象Mesh
             bullet_new.position.set(position.x, position.y, position.z);
+            bullet_new.uid = idGenerator.gen("bullet");
             bullet_new.name = 'bullet';
             //生成bullet图像，并初始化位置
 
-            var body = genDamageObject(bullet_new.id, bullet_new.name, 114, position, "ball");
+            var body = genDamageObject(bullet_new.uid, bullet_new.name, 114, position, "ball");
 
             var dir_camera = new THREE.Quaternion();
             camera[0].getWorldQuaternion(dir_camera);
@@ -1013,20 +1243,17 @@ function init(){
             scene[0].add(bullet_new);
             phyWorld[0].addBody(body);
             bullet.push(bullet_new);
-            bulletPhysics.push(body);
+            bulletPhysic.push(body);
 
-            // if((tset*t)/1000 <20){
-            //     tset = tset*t;
-            // }
-            // else{
-            //     tset = 20000;
-            // }
+            //console.log(bullet_new.uid);
 
-            setTimeout(function(){
+            var timer = setTimeout(function(){
                 var outBullet = bullet.shift();
-                var outBulletBody = bulletPhysics.shift();
-                deletObject(outBulletBody);
+                var outBulletBody = bulletPhysic.shift();
+                deletObject(outBulletBody, false);
             },tset);
+
+            body.timer = timer;
         }
         this.rocket = function ([x, y, z], aimid){
             var tset = 20000;
@@ -1040,10 +1267,11 @@ function init(){
             var mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
             //console.log(mesh);
             mesh.position.set(x,y,z);
+            mesh.uid = idGenerator.gen("rocket");
             mesh.name = "rocket";
             rocket.push(mesh);
 
-            var body = genDamageObject(mesh.id, mesh.name, 514, mesh.position, "box");
+            var body = genDamageObject(mesh.uid, mesh.name, 514, mesh.position, "box");
             body.aimid = aimid;
             //console.log(body.position);
             rocketPhysic.push(body);
@@ -1059,21 +1287,32 @@ function init(){
             scene[0].add(mesh);
             phyWorld[0].addBody(body);
 
-            setTimeout(function(){
+            //console.log(body.id);
+
+            var timer = setTimeout(function(){
                 var outRocket = rocket.shift();
                 var outRocketBody = rocketPhysic.shift();
-                deletObject(outRocketBody);
+                deletObject(outRocketBody, false);
             },tset);
+
+            //console.log(timer);
+            body.timer = timer;
+            //console.log(body.timer);
         }
         this.rocketMove = function (){
             for(var i = 0; i < rocket.length; i++){
                 var obj = getObject(rocketPhysic[i].aimid);
-                var dd = move.dirToAim(rocketPhysic[i], obj[1]);
-                var dir = dd[0], dist = dd[1];
-                dist = move.goAim(rocketPhysic[i],dir,dist,100,5);
-                //console.log(rocketPhysic[i].velocity);
-                if(dist[0] < 55){
-                    deletObject(rocketPhysic[i]);
+                //console.log(obj);
+                if(obj[1] !== undefined){
+                    var dd = move.dirToAim(rocketPhysic[i], obj[1]);
+                    var dir = dd[0], dist = dd[1];
+                    dist = move.goAim(rocketPhysic[i],dir,dist,400,2);
+                    //console.log(rocketPhysic[i].velocity);
+                    //日后可以在这里增加爆炸效果
+                }
+                else {
+                    deletObject(rocketPhysic[i], true);
+                    //console.log(rocket.length,rocketPhysic.length);
                 }
             }
         }
@@ -1107,10 +1346,84 @@ function init(){
             return body;
         }
     }
-    function deletObject(objet){
+    function genHitpointObject(id, name, mass, hitpoint, hitpointMax, pos, type){
+        if(type === "box"){
+            var body = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
+                mass: mass, //刚体的质量，这里单位为kg
+                position: new CANNON.Vec3(pos.x, pos.y, pos.z), //刚体的位置，单位是米
+                shape: new CANNON.Box(new CANNON.Vec3(25, 25, 25)), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
+                material: new CANNON.Material({friction: 0.01, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
+            });
+
+            body.name = name;
+            body.id = id;
+            body.hitpoint = hitpoint;
+            body.hitpointMax = hitpointMax;
+
+            body.addEventListener("collide", function (event){
+                damageCalculate(event, "enemyGenerator.fadeWithHp")
+            });
+            return body;
+        }
+    }
+    Array.prototype.indexOf = function (val) {
+        for(var i = 0; i < this.length; i++){
+            if(this[i] == val){return i;}
+        }
+        return -1;
+    }
+    Array.prototype.remove = function (val) {
+        var index = this.indexOf(val);
+        if(index > -1){this.splice(index,1);}
+    }
+    function damageCalculate(event, fn){
+        if(event.body.damage !== undefined){
+            if(event.body.damage < 0 && event.target.hitpoint < event.target.hitpointMax){
+                event.target.hitpoint = event.target.hitpoint - event.body.damage;
+            }
+            if(event.body.damage > 0){
+                event.target.hitpoint = event.target.hitpoint - event.body.damage;
+            }
+            deletObject(event.body, true);
+        }
+        if(event.target.hitpoint < 0){
+            deletObject(event.target, true);
+
+        }
+        else {
+            if(typeof(eval(fn)) == "function"){
+                eval(fn+"(event.target.id);");
+            }
+            else
+            {
+                // 函数不存在
+            }
+        }
+    }
+    function deletObject(objet, delPop){
         var id = objet.id;
         var objs = getObject(id);
+
         if(objs[0] != null && objs[1] != null){
+            if(delPop){
+                if(objs[0].name === "rocket"){
+                    rocket.remove(objs[0]);
+                    rocketPhysic.remove(objs[1]);
+                }
+                if(objs[0].name === "bullet"){
+                    bullet.remove(objs[0]);
+                    bulletPhysic.remove(objs[1]);
+                }
+                if(objs[0].name === "crystal"){
+                    crystal.remove(objs[0]);
+                    crystalPhysic.remove(objs[1]);
+                }
+                if(objs[1].timer !== undefined){
+                    var timer = objs[1].timer;
+                    //console.log(timer);
+                    clearTimeout(timer);
+                }
+            }
             scene[0].remove(objs[0]);
             phyWorld[0].removeBody(objs[1]);
         }
@@ -1119,7 +1432,7 @@ function init(){
     function getObject(id){
         var mesh, body;
         for(var i = 0; i < scene[0].children.length; i++){
-            if(scene[0].children[i].id === id){
+            if(scene[0].children[i].uid === id){
                 mesh = scene[0].children[i];
             }
         }
@@ -1198,8 +1511,9 @@ function init(){
             //console.log(document.getElementById("energy"));
             document.getElementById("energy").setAttribute('stroke-dashoffset',pct);
 
-            document.getElementById("inf").innerHTML = score[0];
-            if((score[0] - score[1]) >= 2){
+            document.getElementById("inf").innerHTML = crystalNum - crystal.length;
+
+            if(crystalNum - crystal.length >= crystalNum){
                 destinationPhysic[0].collisionMaskGroup = 2;
                 destinationPhysic[0].collisionFilterGroup = 2;
                 document.getElementById("inf").style.color = "#ff0000";
@@ -1208,7 +1522,7 @@ function init(){
 
             for(var i = 0; i < scene[0].children.length; i++){
                 if(scene[0].children[i].name === "rocket"){
-                    var id = scene[0].children[i].id, rockExist = true;
+                    var id = scene[0].children[i].uid, rockExist = true;
                     var dd = move.dirToAim(playerPhysic[0], scene[0].children[i]);
                     var dir = move.dirToAimRelative(camera[0], scene[0], scene[0].children[i]);
                     var deg = (Math.sqrt(dir.x*dir.x + dir.y*dir.y)/Math.abs(dir.z));
@@ -1341,9 +1655,9 @@ function init(){
         this.checkCatchExist = function (){
             //console.log(this.catchedObj.length);
             if(this.catchedObj.length === 1){
-                var id = this.catchedObj[0].id, flag = false;
+                var id = this.catchedObj[0].uid, flag = false;
                 for(var i = 0; i < scene[0].children.length; i++){
-                    if(scene[0].children[i].id === id){flag = true}
+                    if(scene[0].children[i].uid === id){flag = true}
                 }
                 //console.log(flag);
                 if(flag === false){
@@ -1374,7 +1688,7 @@ function init(){
             }
         }//刷新三角ui
         this.catchShowPosition = function (){
-            var obj = rayCaster(new THREE.Vector2(0,0), 1500);
+            var obj = rayCaster(new THREE.Vector2(0,0), 3000);
             //console.log(obj);
             if(obj !== undefined){
                 if(this.catchedObj.length === 0){
@@ -1423,7 +1737,7 @@ function init(){
             this.velocityObj.position.z = obj.position.z + obj.velocity.z*t;
         }
         this.getPhysicItem = function (obj){
-            var id = obj.id;
+            var id = obj.uid;
             for(var i = 0; i < phyWorld[0].bodies.length; i++){
                 if(phyWorld[0].bodies[i].id === id){
                     return phyWorld[0].bodies[i];
@@ -1454,10 +1768,10 @@ function init(){
 
     moduleLoad();
 
-    var env = new Env(scene,destination,camera,renderer,timeCloud,player);
-    var physic = new Physic(phyWorld,destinationPhysic,playerPhysic,rocket,rocketPhysic);
+    var env = new Env(scene,destination,camera,renderer,timeCloud,player,crystal);
+    var physic = new Physic(phyWorld,destinationPhysic,playerPhysic,rocket,rocketPhysic,crystal,crystalPhysic);
     var map = new MiniMap(scene,destination,player,renderer,camera,timeCloudMap);
-    var move = new Move(), engine, ui = new UI(), G2B = new FronGemotryToBody(), weapon = new Weapon(), playerOption;
+    var move = new Move(), engine, ui = new UI(), G2B = new FronGemotryToBody(), weapon = new Weapon(), playerOption, idGenerator = new IdGenerator(), enemyGenerator = new Enemy();
 
     document.oncontextmenu = function(){return false};
     document.addEventListener('mousedown', function(event){
@@ -1483,7 +1797,7 @@ function init(){
         if(event.button === 2){
             event.preventDefault();
             if(ui.catchedObj[0] !== undefined){
-                playerOption.launchRocket(ui.catchedObj[0].id);
+                playerOption.launchRocket(ui.catchedObj[0].uid);
             }
         }
     });
@@ -1502,12 +1816,12 @@ function init(){
       keyCode[event.keyCode] = false;
     };
 
-    const collideTest = throttle(function (event){
-      if(event.contact.bj.name === "bullet"){
-        score[0] = score[0] + 1;
-        //document.getElementById("inf").innerHTML = score[0];
-      }
-    },100);
+    // const collideTest = throttle(function (event){
+    //   if(event.contact.bj.name === "bullet"){
+    //     score[0] = score[0] + 1;
+    //     //document.getElementById("inf").innerHTML = score[0];
+    //   }
+    // },100);
 
     setInterval(function(){
         freshAll(env,physic,map,ui);
@@ -1520,12 +1834,14 @@ function init(){
       else{
         env.init();
         physic.init();
+        enemyGenerator.init();
         map.init();
         ui.init();
         physic.freshPhysic();
         env.fresh();
         engine = new Engine(camera[0],playerPhysic[0]);
         playerOption  = new Player(player[0], camera[0]);
+
         //engine.init();
         //console.log(player[0])
         render();
@@ -1553,8 +1869,8 @@ function init(){
     },100);
     setInterval(function () {
         //console.log(ui.catchedObj[0]);
-        console.log(moveEnergy);
-    },1000);
+        console.log(crystal.length);
+    },100);
 }
 
 
