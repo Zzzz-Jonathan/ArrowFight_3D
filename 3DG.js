@@ -3,7 +3,7 @@ import {Geometry} from "./Geometry.js";
 init();
 
 function init(){
-    var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], mouseCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, crystalNum = 5, vOfPlayer = [200,130,60], aOfPlayer = [10,5,5], catchedtime = +new Date();//
+    var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], mouseCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, crystalNum = 5, vOfPlayer = [200,130,60], aOfPlayer = [10,5,5], catchedtime = +new Date(), rayDist = 3000;//
     var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = [], bulletPhysic = [], toxicPhysic = [];
     var crystal = [], crystalPhysic = [];
     var playerModule = [], cloudModules = [], texture = [], blackholeModules = [];
@@ -758,6 +758,8 @@ function init(){
     }
     function rayCaster(posV2, dist){
         var raycaster = new THREE.Raycaster();//光线投射器
+        raycaster.far = rayDist;
+        console.log(raycaster);
         raycaster.setFromCamera(posV2, camera[0]);
         var intersects = raycaster.intersectObjects(scene[0].children);
         //console.log(intersects);
@@ -1563,7 +1565,7 @@ function init(){
             if(this.catchedObj.length !== 0){
                 //console.log(this.catchedObj);
                 var dd = move.dirToAim(player[0], this.catchedObj[0]);
-                if(dd[1] < 1500){
+                if(dd[1] < rayDist){
                     var pos = this.positionOnScreen(this.catchedObj[0]);
                     var posV = this.posVUI(this.catchedObj[0], pos[0], pos[1]);
                     //console.log(pos);
@@ -1576,7 +1578,7 @@ function init(){
                             this.catchedUIType = 1;
                             //创建ui1
                             this.genCatchedUI(vid, posV[0], posV[1], "rgba(255,0,0,0.6)");
-                            this.genCatchedUI(id, pos[0], pos[1], "rgba(255,255,0,0.6)");
+                            this.genRectUI(id, pos[0], pos[1], "rgba(255,255,0,0.6)");
                         }
                         else {
                             var objUI = document.getElementById(id);
@@ -1588,7 +1590,7 @@ function init(){
                                 //移除ui
                                 //创建ui1
                                 this.genCatchedUI(vid, posV[0], posV[1], "rgba(255,0,0,0.6)");
-                                this.genCatchedUI(id, pos[0], pos[1], "rgba(255,255,0,0.6)");
+                                this.genRectUI(id, pos[0], pos[1], "rgba(255,255,0,0.6)");
                             }
                             else {
                                 //更新ui1
@@ -1688,7 +1690,7 @@ function init(){
             }
         }//刷新三角ui
         this.catchShowPosition = function (){
-            var obj = rayCaster(new THREE.Vector2(0,0), 3000);
+            var obj = rayCaster(new THREE.Vector2(0,0), rayDist);
             //console.log(obj);
             if(obj !== undefined){
                 if(this.catchedObj.length === 0){
@@ -1708,11 +1710,35 @@ function init(){
             cu.setAttribute("id", id);
             cu.setAttribute("class", "cross");
             cu.setAttribute("points", "110,120 130,120 120,110 120,130");
-            cu.setAttribute("stroke", color)
+            cu.setAttribute("stroke", color);
             cu.style.transform = "translate("+x+"px,"+y+"px)";
             document.getElementById("svgCenter").appendChild(cu);
             //<polyline id="cross1" points="110,120 130,120 120,110 120,130" stroke-dasharray="19.5,15.1" style="fill:none; stroke:black; stroke-width:2"></polyline>
         }//生成正面ui
+        this.genRectUI = function (id, x, y, color){
+            //console.log(114);
+            var ru = document.createElementNS("http://www.w3.org/2000/svg","rect");
+            //console.log(514);
+            ru.setAttribute("id", id);
+            //ru.setAttribute("class", "cross");
+            ru.setAttribute("x", "95");
+            ru.setAttribute("y", "95");
+            ru.setAttribute("rx", "5");
+            ru.setAttribute("ry", "5");
+            ru.setAttribute("width", "50");
+            ru.setAttribute("height", "50");
+            ru.setAttribute("fill", "blue");
+            ru.setAttribute("stroke", "50");
+            ru.setAttribute("stroke", color);
+            ru.setAttribute("stroke-width", "3px");
+            ru.setAttribute("stroke-dashoffset", "7.5");
+            ru.setAttribute("stroke-dasharray", "7.5,40");
+            ru.setAttribute("fill-opacity", "0");
+            ru.setAttribute("stroke-opacity", "0.7");
+            ru.style.transform = "translate("+x+"px,"+y+"px)";
+
+            document.getElementById("svgCenter").appendChild(ru);
+        }
         this.freshCatchedUI = function (obj, x, y){
             obj.style.transform = "translate("+x+"px,"+y+"px)";
 
@@ -1869,7 +1895,7 @@ function init(){
     },100);
     setInterval(function () {
         //console.log(ui.catchedObj[0]);
-        console.log(crystal.length);
+        //console.log(crystal.length);
     },100);
 }
 

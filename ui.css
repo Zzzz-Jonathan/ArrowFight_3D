@@ -9,7 +9,14 @@
 .cross {
     stroke-dasharray: 19.5,15.1;
     transform: translate(0,0);
-    fill:none; stroke-width:2
+    fill:none; stroke-width:2;
+}
+.aimRect {
+    stroke-width:3px;
+    stroke-dashoffset:7.5;
+    stroke-dasharray: 7.5,40;
+    fill-opacity:0;
+    stroke-opacity:0.7;
 }
 #svgCenter {
     position: absolute; left: 0; top: 0; right: 0; bottom: 0;
