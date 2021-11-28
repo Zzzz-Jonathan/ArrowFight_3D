@@ -1,4 +1,5 @@
 import {Geometry} from "./Geometry.js";
+import {Communicate} from "./sendInf.js"
 
 init();
 
@@ -1798,6 +1799,7 @@ function init(){
     var physic = new Physic(phyWorld,destinationPhysic,playerPhysic,rocket,rocketPhysic,crystal,crystalPhysic);
     var map = new MiniMap(scene,destination,player,renderer,camera,timeCloudMap);
     var move = new Move(), engine, ui = new UI(), G2B = new FronGemotryToBody(), weapon = new Weapon(), playerOption, idGenerator = new IdGenerator(), enemyGenerator = new Enemy();
+    var com = new Communicate();
 
     document.oncontextmenu = function(){return false};
     document.addEventListener('mousedown', function(event){
@@ -1896,7 +1898,9 @@ function init(){
     setInterval(function () {
         //console.log(ui.catchedObj[0]);
         //console.log(crystal.length);
-    },100);
+        //com.inf(playerPhysic[0], crystalPhysic[0], moveEnergy, camera[0]);
+        com.POSTJSON("http://127.0.0.1:8000/player/", com.inf(playerPhysic[0], crystalPhysic[0], moveEnergy, camera[0]))
+    },2000);
 }
 
 
