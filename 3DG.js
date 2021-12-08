@@ -62,7 +62,7 @@ function init(){
             scene[0].add(this.bgsphere);//天空球
             //player[0].material.map = texture[1]; //整活小车代码
             //this.genToxicCloud();
-            scene[0].add(blackholeModules[0]);
+            //scene[0].add(blackholeModules[0]);
         }
         this.destinationCube = function (){
             var triangles = 16000;
@@ -880,16 +880,16 @@ function init(){
         texture.push(textureC);
 
 
-        var FBXLoaderB = new THREE.FBXLoader();
-        FBXLoaderB.load("./blackhole.fbx",function (obj){
-            //console.log(obj);
-            // for(var i = 0; i < obj.children.length; i++){
-            //     obj.children[i].material.side = THREE.DoubleSide;
-            // }
-            //console.log(obj);
-            obj.scale.set(100,100,100);
-            blackholeModules.push(obj);
-        });
+        // var FBXLoaderB = new THREE.FBXLoader();
+        // FBXLoaderB.load("./blackhole.fbx",function (obj){
+        //     //console.log(obj);
+        //     // for(var i = 0; i < obj.children.length; i++){
+        //     //     obj.children[i].material.side = THREE.DoubleSide;
+        //     // }
+        //     //console.log(obj);
+        //     obj.scale.set(100,100,100);
+        //     blackholeModules.push(obj);
+        // });
     }
     function throttle(fn, delay){
         let last = 0, timer = null;
@@ -1122,6 +1122,13 @@ function init(){
         }
     }
     function keyMotion(){
+        if(trainingModel === true) {
+            trainM.actionToKey(autoAction, mouseCode, keyCode);
+            let cR = trainM.actionToMouse(autoAction), k = 10;
+            console.log(cR);
+            camera[0].rotateY(cR[0]/k);
+            camera[0].rotateX(cR[1]/k);
+        }
         // var dir = new THREE.Vector3();
         // camera[0].getWorldDirection(dir);
         if(mouseCode[0]){
@@ -1782,8 +1789,9 @@ function init(){
             return this.positionOnScreen(this.velocityObj);
         }
     }
-    function freshAll(env, physic, map, ui){
+    function freshAll(env, physic, map, ui, train){
         if(!loading){
+            trainingModel = train.keyBoardTest(keyCode);
             keyMotion();
             weapon.rocketMove();
             map.fresh();
@@ -1808,7 +1816,7 @@ function init(){
         if(document.pointerLockElement !== document.body){
             document.body.requestPointerLock();
         }
-        if(event.button === 0){
+        if(event.button === 0 && trainingModel === false){
             mouseCode[0] = true;
             if(new Date() - mouseClickTime > 300){
                 mouseClickTime = new Date() - 310;
@@ -1819,31 +1827,33 @@ function init(){
         }
     });
     document.addEventListener('mouseup', function(event){
-        if(event.button === 0){
+        if(event.button === 0 && trainingModel === false){
             mouseCode[0] = false;
             // mouseClickTime = new Date() - mouseClickTime;
             // playerOption.shoot(mouseClickTime);
         }
-        if(event.button === 2){
+        if(event.button === 2 && trainingModel === false){
             event.preventDefault();
             if(ui.catchedObj[0] !== undefined){
                 playerOption.launchRocket(ui.catchedObj[0].uid);
             }
         }
     });
-    document.body.addEventListener('mousemove',function(event){
-      if (document.pointerLockElement === document.body){
-        //player[0].rotateY(-1*event.movementX/500);
-        camera[0].rotateY(-1*event.movementX/500);
-        //player[0].rotateX(-1*event.movementY/500);
-        camera[0].rotateX(-1*event.movementY/500);
-      }
+    document.body.addEventListener('mousemove',function(event) {
+        if (document.pointerLockElement === document.body && trainingModel === false) {
+            var cry = 0, crx = 0;
+            cry = -1 * event.movementX / 500;
+            crx = -1 * event.movementY / 500;
+            //console.log(cry, crx)
+            camera[0].rotateY(cry);
+            camera[0].rotateX(crx);
+        }
     });
     document.onkeydown=function(event){
-      keyCode[event.keyCode] = true;
+        keyCode[event.keyCode] = true;
     };
     document.onkeyup=function(event){
-      keyCode[event.keyCode] = false;
+        keyCode[event.keyCode] = false;
     };
 
     // const collideTest = throttle(function (event){
@@ -1854,10 +1864,10 @@ function init(){
     // },100);
 
     setInterval(function(){
-        freshAll(env,physic,map,ui);
+        freshAll(env,physic,map,ui,trainM);
     },10);
     var checkLoad = setInterval(function () {
-      if((cloudModules.length < 1) || (playerModule.length < 1) || (texture.length < 1) || (blackholeModules.length < 1)){//
+      if((cloudModules.length < 1) || (playerModule.length < 1) || (texture.length < 1) || (blackholeModules.length < 0)){//
         document.getElementById("load").style.display="";
         //console.log(document.getElementById("load"));
       }
@@ -1902,6 +1912,9 @@ function init(){
         toServe.postMessage({yaju: "takadoro", sennpai: "hozi", id: new Date()});
         //com.POSTJSON("http://127.0.0.1:8000/player/", com.inf(playerPhysic[0], crystalPhysic[0], moveEnergy, camera[0]))
     },2);
+    // setInterval(function (){
+    //     console.log(camera[0].rotation);
+    // },100)
     toServe.onmessage = function (event) {
         let type = typeof (event.data)
         if(type === "number"){
@@ -1909,7 +1922,8 @@ function init(){
         }
         if(type === "object"){
             let obj = event.data;
-            console.log(obj.msg);
+            autoAction = trainM.actionTrans(obj.msg);
+            console.log(autoAction);
         }
     }
 }
