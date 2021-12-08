@@ -23,7 +23,7 @@ class Communicate {
             }
         }
     }
-    inf(player, enemy, energy, camera){
+    inf(player, enemy, energy, camera, reward, done){
         var positionP = player.position, velocityP = player.velocity, rotationP = camera.rotation;
         var positionE = enemy.position, velocityE = enemy.velocity;
         var hitpointP = player.hitpoint, hitPointE = enemy.hitpoint;
@@ -32,9 +32,9 @@ class Communicate {
         //var json = [];
         var row = {};
 
-        row.playerId = playerId;
+        row.playerId = playerId;//id
 
-        var rowPP = {};
+        var rowPP = {};//state
         rowPP.x = positionP.x;
         rowPP.y = positionP.y;
         rowPP.z = positionP.z;
