@@ -1896,12 +1896,19 @@ function init(){
       }
     },100);
     setInterval(function () {
-        //console.log(toServe);
+        //console.log("send");
         toServe.postMessage({yaju: "takadoro", sennpai: "hozi", id: new Date()});
         //com.POSTJSON("http://127.0.0.1:8000/player/", com.inf(playerPhysic[0], crystalPhysic[0], moveEnergy, camera[0]))
     },2000);
     toServe.onmessage = function (event) {
-        console.log('Received message: ' + event.data);
+        let type = typeof (event.data)
+        if(type === "number"){
+            console.log('Time cost: ' + event.data+'ms in one step');
+        }
+        if(type === "object"){
+            let obj = event.data;
+            console.log(obj.msg);
+        }
     }
 }
 
