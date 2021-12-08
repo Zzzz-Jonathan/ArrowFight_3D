@@ -5,6 +5,7 @@ init();
 
 function init(){
     var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], mouseCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, crystalNum = 5, vOfPlayer = [200,130,60], aOfPlayer = [10,5,5], catchedtime = +new Date(), rayDist = 3000;//
+    var trainingModel = false;
     var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = [], bulletPhysic = [], toxicPhysic = [];
     var crystal = [], crystalPhysic = [];
     var playerModule = [], cloudModules = [], texture = [], blackholeModules = [];
