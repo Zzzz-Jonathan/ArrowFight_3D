@@ -1,11 +1,12 @@
 import {Geometry} from "./Geometry.js";
 import {Communicate} from "./sendInf.js"
+import {TrainingModel} from "./trainingModel.js";
 
 init();
 
 function init(){
     var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], mouseCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, crystalNum = 5, vOfPlayer = [200,130,60], aOfPlayer = [10,5,5], catchedtime = +new Date(), rayDist = 3000;//
-    var trainingModel = false;
+    var trainingModel = false, autoAction = [];
     var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = [], bulletPhysic = [], toxicPhysic = [];
     var crystal = [], crystalPhysic = [];
     var playerModule = [], cloudModules = [], texture = [], blackholeModules = [];
@@ -1800,7 +1801,7 @@ function init(){
     var physic = new Physic(phyWorld,destinationPhysic,playerPhysic,rocket,rocketPhysic,crystal,crystalPhysic);
     var map = new MiniMap(scene,destination,player,renderer,camera,timeCloudMap);
     var move = new Move(), engine, ui = new UI(), G2B = new FronGemotryToBody(), weapon = new Weapon(), playerOption, idGenerator = new IdGenerator(), enemyGenerator = new Enemy();
-    var com = new Communicate(), toServe = new Worker('worker.js');
+    var com = new Communicate(), toServe = new Worker('worker.js'), trainM = new TrainingModel();
 
     document.oncontextmenu = function(){return false};
     document.addEventListener('mousedown', function(event){
@@ -1897,10 +1898,10 @@ function init(){
       }
     },100);
     setInterval(function () {
-        //console.log("send");
+        //console.log(trainM.keyBoardTest(keyCode));
         toServe.postMessage({yaju: "takadoro", sennpai: "hozi", id: new Date()});
         //com.POSTJSON("http://127.0.0.1:8000/player/", com.inf(playerPhysic[0], crystalPhysic[0], moveEnergy, camera[0]))
-    },2000);
+    },2);
     toServe.onmessage = function (event) {
         let type = typeof (event.data)
         if(type === "number"){
