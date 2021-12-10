@@ -6,7 +6,7 @@ init();
 
 function init(){
     var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], mouseCode = [], EnergyMax = 400, mouseClickTime = 0, loading = true, crystalNum = 5, vOfPlayer = [200,130,60], aOfPlayer = [10,5,5], catchedtime = +new Date(), rayDist = 3000;//
-    var trainingModel = false, autoAction = [];
+    var trainingModel = false, autoAction = [], gameTime = 180000;
     var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = [], bulletPhysic = [], toxicPhysic = [];
     var crystal = [], crystalPhysic = [];
     var playerModule = [], cloudModules = [], texture = [], blackholeModules = [];
@@ -309,9 +309,10 @@ function init(){
             }
         }
     }
-    function Player(playermodule, camera){
+    function Player(playermodule, camera, playerP){
         this.playermodule = playermodule;
         this.camera = camera;
+        this.playerP = playerP;
 
         this.shoot = function(t){
             //console.log(this.camera);
@@ -327,6 +328,12 @@ function init(){
             this.camera.getWorldDirection(ro);
             po.add(ro.multiplyScalar(100));
             weapon.rocket([po.x, po.y, po.z], aim);
+        }
+        this.reset = function (){
+            //this.camera.lookAt(new THREE.Vector3(0,0,-1));
+            this.playerP.position.set(0,0,0);
+            this.playerP.velocity.set(0,0,0);
+            this.playerP.energy = EnergyMax;
         }
     }
     function Enemy(){
@@ -1882,8 +1889,8 @@ function init(){
         physic.freshPhysic();
         env.fresh();
         engine = new Engine(camera[0],playerPhysic[0]);
-        playerOption  = new Player(player[0], camera[0]);
-        state = new State(crystalPhysic, playerPhysic[0], camera[0]);
+        playerOption  = new Player(player[0], camera[0], playerPhysic[0]);
+        state = new State(crystalPhysic, playerPhysic[0], camera[0], gameTime);
 
         //engine.init();
         //console.log(player[0])
@@ -1923,6 +1930,7 @@ function init(){
         if(event.data === 'Done has send!'){
             env.fresh();
             state.resetMsg();
+            playerOption.reset();
         }
         else {
             let type = typeof (event.data);

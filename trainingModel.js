@@ -12,8 +12,8 @@ class TrainingModel {
             if (!keyCode[84] && !keyCode[77]){
                 this.start = false;
                 this.mode = !this.mode;
-                worker.postMessage('Start train / End train');
                 state.resetMsg();
+                worker.postMessage('Start train / End train');
             }
         }
         return this.mode;

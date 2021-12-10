@@ -1,5 +1,5 @@
 class State {
-    constructor(enemy, player, camera){
+    constructor(enemy, player, camera, gameTime){
         this.player = player;
         this.camera = camera;
         this.enemylist = enemy;
@@ -14,6 +14,7 @@ class State {
         this.reward = 0;
         this.time = undefined;
         this.reset = undefined;
+        this.gameTime = gameTime;
     }
     rewardCalc(enemy){
         if(this.enemylist.length < this.enemyNum){
@@ -62,6 +63,7 @@ class State {
 
         if(this.reset){
             row.type = 'reset';
+            //console.log("reset!");
             this.reset = false;
         }
         else {
@@ -116,7 +118,7 @@ class State {
         let done;
         this.enemy = this.selectEnemy();
         this.rewardCalc(this.enemy);
-        done = this.enemyNum === 0 || (new Date() - this.time) > 180000;
+        done = this.enemyNum === 0 || (new Date() - this.time) > this.gameTime;
         //console.log(new Date() - this.time)
         return this.inf(this.player, this.enemy, this.camera, this.reward, done);
     }
