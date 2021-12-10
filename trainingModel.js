@@ -3,7 +3,7 @@ class TrainingModel {
         this.start = false;
         this.mode = false;
     }
-    keyBoardTest(keyCode){
+    keyBoardTest(keyCode,worker,state){
         if (keyCode[84] && keyCode[77]) {
             //同时按下t,m
             this.start = true;
@@ -12,6 +12,8 @@ class TrainingModel {
             if (!keyCode[84] && !keyCode[77]){
                 this.start = false;
                 this.mode = !this.mode;
+                worker.postMessage('Start train / End train');
+                state.resetMsg();
             }
         }
         return this.mode;
@@ -61,7 +63,7 @@ class TrainingModel {
         }
     }
     actionToMouse (autoAction){
-        var cry, crx;
+        var cry = 0, crx = 0;
         if(autoAction[2] === 0){cry = crx = 0;}
         else if(autoAction[2] === 1){cry = 0; crx = 0.02;}
         else if(autoAction[2] === 2){cry = 0; crx = -0.02;}

@@ -1,8 +1,14 @@
-const url = 'http://127.0.0.1:8000/test/'
-var data = undefined, result = true, dateTime = new Date();
+const url = 'http://127.0.0.1:8000/player/'
+var data = undefined, result = true, dateTime = new Date(), trainFlag = false, initialStep = true, doneFlag = false;
+const stepTime = 200;
 
 self.onmessage = function (event){
-    data = event.data;
+    if(event.data === 'Start train / End train'){
+        trainFlag = !trainFlag;
+    }
+    else {
+        data = event.data;
+    }
     //postMessage("Worker received!");
 }
 
@@ -20,7 +26,11 @@ function postJson(url, data){
         if (xhr.readyState === 4) {
             if(xhr.getResponseHeader('content-type')==='application/json') {
                 postMessage(JSON.parse(xhr.responseText));
-                result = true;
+                if(doneFlag){
+                    postMessage('Done has send!');
+                    doneFlag = !doneFlag;
+                }
+                sleep(stepTime).then(()=>(result = true));
                 //console.log(xhr.responseText);
             }
         }
@@ -30,10 +40,13 @@ function postJson(url, data){
     // }
 }
 setInterval(function (){
-    if(result && data !== undefined){
+    if(result && data !== undefined && trainFlag){
         result = false;
         postJson(url, data);
         postMessage(new Date() - dateTime);
+        if(!doneFlag && data.done){
+            doneFlag = true;
+        }
         dateTime = new Date();
     }
 },10);

@@ -1,11 +1,11 @@
 import {Geometry} from "./Geometry.js";
-import {Communicate} from "./sendInf.js"
+import {State} from "./state.js"
 import {TrainingModel} from "./trainingModel.js";
 
 init();
 
 function init(){
-    var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], mouseCode = [], moveEnergy = 400,moveEnergyMax = 400, mouseClickTime = 0, loading = true, crystalNum = 5, vOfPlayer = [200,130,60], aOfPlayer = [10,5,5], catchedtime = +new Date(), rayDist = 3000;//
+    var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], mouseCode = [], EnergyMax = 400, mouseClickTime = 0, loading = true, crystalNum = 5, vOfPlayer = [200,130,60], aOfPlayer = [10,5,5], catchedtime = +new Date(), rayDist = 3000;//
     var trainingModel = false, autoAction = [];
     var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = [], bulletPhysic = [], toxicPhysic = [];
     var crystal = [], crystalPhysic = [];
@@ -802,6 +802,7 @@ function init(){
                 material: new CANNON.Material({friction: 10, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
             });
             player_new.id = player[0].uid;
+            player_new.energy = EnergyMax;
             playerPhysic.push(player_new);
             phyWorld[0].addBody(playerPhysic[0]);
         }
@@ -943,7 +944,7 @@ function init(){
  
 		return target; 
     }
-    function FronGemotryToBody(){
+    function FromGemotryToBody(){
         this.toB = function(geometry){
             var GG = new Geometry;
             var geometry = GG.fromBufferGeometry(geometry);
@@ -1124,28 +1125,29 @@ function init(){
     function keyMotion(){
         if(trainingModel === true) {
             trainM.actionToKey(autoAction, mouseCode, keyCode);
-            let cR = trainM.actionToMouse(autoAction), k = 10;
-            console.log(cR);
+            let cR = trainM.actionToMouse(autoAction), k = 3;
+
             camera[0].rotateY(cR[0]/k);
             camera[0].rotateX(cR[1]/k);
+            //console.log(cR);
         }
         // var dir = new THREE.Vector3();
         // camera[0].getWorldDirection(dir);
         if(mouseCode[0]){
             var t = new Date() - mouseClickTime;
-            if(t > 300 && moveEnergy > 0){
+            if(t > 300 && playerPhysic[0].energy > 0){
                 mouseClickTime = new Date();
                 playerOption.shoot();
-                moveEnergy = moveEnergy - 5;
+                playerPhysic[0].energy = playerPhysic[0].energy - 5;
             }
         }
 
         if(keyCode[87] || keyCode[83]){//按下W
             //console.log(playerPhysic[0]);
             if(keyCode[87] && !keyCode[83]){
-                if(keyCode[32] && (moveEnergy >= 0)){
+                if(keyCode[32] && (playerPhysic[0].energy >= 0)){
                     engine.nZ(vOfPlayer[0],aOfPlayer[0]);
-                    moveEnergy = moveEnergy -1;
+                    playerPhysic[0].energy = playerPhysic[0].energy -1;
                 }
                 else {
                     engine.nZ(vOfPlayer[1],aOfPlayer[1]);
@@ -1193,8 +1195,8 @@ function init(){
             }
         }//按下C
 
-        if((moveEnergy < moveEnergyMax) && (!keyCode[32] || !keyCode[87]) && (!mouseCode[0] && new Date() - mouseClickTime > 500)){
-            moveEnergy = moveEnergy + 0.5;
+        if((playerPhysic[0].energy < EnergyMax) && (!keyCode[32] || !keyCode[87]) && (!mouseCode[0] && new Date() - mouseClickTime > 500)){
+            playerPhysic[0].energy = playerPhysic[0].energy + 0.5;
         }
 
         engine.init();
@@ -1519,7 +1521,7 @@ function init(){
             return degflat;
         }
         this.fresh = function(){
-            var pct = 172.7 - (moveEnergy/moveEnergyMax)*172.7;
+            var pct = 172.7 - (playerPhysic[0].energy/EnergyMax)*172.7;
             //console.log(document.getElementById("energy"));
             document.getElementById("energy").setAttribute('stroke-dashoffset',pct);
 
@@ -1791,7 +1793,7 @@ function init(){
     }
     function freshAll(env, physic, map, ui, train){
         if(!loading){
-            trainingModel = train.keyBoardTest(keyCode);
+            trainingModel = train.keyBoardTest(keyCode, toServe, state);
             keyMotion();
             weapon.rocketMove();
             map.fresh();
@@ -1808,8 +1810,8 @@ function init(){
     var env = new Env(scene,destination,camera,renderer,timeCloud,player,crystal);
     var physic = new Physic(phyWorld,destinationPhysic,playerPhysic,rocket,rocketPhysic,crystal,crystalPhysic);
     var map = new MiniMap(scene,destination,player,renderer,camera,timeCloudMap);
-    var move = new Move(), engine, ui = new UI(), G2B = new FronGemotryToBody(), weapon = new Weapon(), playerOption, idGenerator = new IdGenerator(), enemyGenerator = new Enemy();
-    var com = new Communicate(), toServe = new Worker('worker.js'), trainM = new TrainingModel();
+    var move = new Move(), engine, ui = new UI(), G2B = new FromGemotryToBody(), weapon = new Weapon(), playerOption, idGenerator = new IdGenerator(), enemyGenerator = new Enemy();
+    var toServe = new Worker('worker.js'), trainM = new TrainingModel(), state;
 
     document.oncontextmenu = function(){return false};
     document.addEventListener('mousedown', function(event){
@@ -1881,6 +1883,7 @@ function init(){
         env.fresh();
         engine = new Engine(camera[0],playerPhysic[0]);
         playerOption  = new Player(player[0], camera[0]);
+        state = new State(crystalPhysic, playerPhysic[0], camera[0]);
 
         //engine.init();
         //console.log(player[0])
@@ -1908,22 +1911,30 @@ function init(){
       }
     },100);
     setInterval(function () {
-        //console.log(trainM.keyBoardTest(keyCode));
-        toServe.postMessage({yaju: "takadoro", sennpai: "hozi", id: new Date()});
-        //com.POSTJSON("http://127.0.0.1:8000/player/", com.inf(playerPhysic[0], crystalPhysic[0], moveEnergy, camera[0]))
-    },2);
-    // setInterval(function (){
-    //     console.log(camera[0].rotation);
-    // },100)
-    toServe.onmessage = function (event) {
-        let type = typeof (event.data)
-        if(type === "number"){
-            console.log('Time cost: ' + event.data+'ms in one step');
+        if(trainingModel){
+            let msg = state.step();
+            toServe.postMessage(msg);
         }
-        if(type === "object"){
-            let obj = event.data;
-            autoAction = trainM.actionTrans(obj.msg);
-            console.log(autoAction);
+    },2);
+    setInterval(function (){
+        //console.log(camera[0].position);
+    },1000)
+    toServe.onmessage = function (event) {
+        if(event.data === 'Done has send!'){
+            env.fresh();
+            state.resetMsg();
+        }
+        else {
+            let type = typeof (event.data);
+            if(type === "number"){
+                console.log('Time cost: ' + event.data+'ms in one step');
+            }
+            if(type === "object"){
+                let obj = event.data;
+                autoAction = trainM.actionTrans(obj.msg);
+                state.clearReward();
+                //console.log(autoAction);
+            }
         }
     }
 }
