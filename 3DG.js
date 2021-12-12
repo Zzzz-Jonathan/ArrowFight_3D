@@ -199,7 +199,12 @@ function init(){
                 crystalPhysic[i].position.set(pos[0], pos[1], pos[2]);
             }
 
-            document.getElementById("inf").style.color = "#ffffff";
+            if(trainingModel){
+                document.getElementById("inf").style.color = "#00ff00";
+            }
+            else {
+                document.getElementById("inf").style.color = "#ffffff";
+            }
             //score[1] = score[0];
             destinationPhysic[0].collisionMaskGroup = 1;
             destinationPhysic[0].collisionFilterGroup = 1;
@@ -1532,7 +1537,12 @@ function init(){
             //console.log(document.getElementById("energy"));
             document.getElementById("energy").setAttribute('stroke-dashoffset',pct);
 
-            document.getElementById("inf").innerHTML = crystalNum - crystal.length;
+            if(trainingModel){
+                document.getElementById("inf").innerHTML = state.showReward;
+            }
+            else{
+                document.getElementById("inf").innerHTML = crystalNum - crystal.length;
+            }
 
             if(crystalNum - crystal.length >= crystalNum){
                 destinationPhysic[0].collisionMaskGroup = 2;
@@ -1825,7 +1835,7 @@ function init(){
         if(document.pointerLockElement !== document.body){
             document.body.requestPointerLock();
         }
-        if(event.button === 0 && trainingModel === false){
+        if(event.button === 0){
             mouseCode[0] = true;
             if(new Date() - mouseClickTime > 300){
                 mouseClickTime = new Date() - 310;
@@ -1836,12 +1846,12 @@ function init(){
         }
     });
     document.addEventListener('mouseup', function(event){
-        if(event.button === 0 && trainingModel === false){
+        if(event.button === 0){
             mouseCode[0] = false;
             // mouseClickTime = new Date() - mouseClickTime;
             // playerOption.shoot(mouseClickTime);
         }
-        if(event.button === 2 && trainingModel === false){
+        if(event.button === 2){
             event.preventDefault();
             if(ui.catchedObj[0] !== undefined){
                 playerOption.launchRocket(ui.catchedObj[0].uid);
@@ -1849,7 +1859,7 @@ function init(){
         }
     });
     document.body.addEventListener('mousemove',function(event) {
-        if (document.pointerLockElement === document.body && trainingModel === false) {
+        if (document.pointerLockElement === document.body) {
             var cry = 0, crx = 0;
             cry = -1 * event.movementX / 500;
             crx = -1 * event.movementY / 500;

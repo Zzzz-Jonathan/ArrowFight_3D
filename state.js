@@ -12,6 +12,7 @@ class State {
         }
         this.enemyNum = enemy.length;
         this.reward = 0;
+        this.showReward = 0;
         this.time = undefined;
         this.reset = undefined;
         this.gameTime = gameTime;
@@ -28,6 +29,7 @@ class State {
             }
             if(enemy.hitpoint < this.eHP[aim]){
                 this.reward += 1;
+                this.showReward += 1;
                 this.eHP[aim] = enemy.hitpoint;
             }
         }
@@ -38,6 +40,7 @@ class State {
     resetMsg(){
         this.reset = true;
         this.time = new Date();
+        this.showReward = 0;
     }
     selectEnemy(){
         let min = 9999, aim = 0;
