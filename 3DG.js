@@ -343,7 +343,7 @@ function init(){
             }
         }
         this.genCrystal = function (crystal, crystalPhysic, [posx, posy, posz]){
-            var triangles = 160;
+            var triangles = 640;
 
             var geometry = new THREE.BufferGeometry();
             var positions = new Float32Array( triangles * 3 * 3);
@@ -352,8 +352,8 @@ function init(){
 
             var color = new THREE.Color();
 
-            var n = 50, n2 = n/2;
-            var d = 25, d2 = d/2;
+            var n = 200, n2 = n/2;
+            var d = 50, d2 = d/2;
 
             var pA = new THREE.Vector3();
             var pB = new THREE.Vector3();
@@ -475,7 +475,7 @@ function init(){
             var colorNew = new Float32Array( obj[0].geometry.colorOrgin.length), color = new THREE.Color();
             for(var i = 0; i < obj[0].geometry.colorOrgin.length; i += 3){
                 if(i > zeroLength){
-                    color.setRGB(1, 1, 1);
+                    color.setRGB(0.3, 0.3, 0.3);
                     colorNew[i] = color.r;
                     colorNew[i+1] = color.g;
                     colorNew[i+2] = color.b;
@@ -1232,7 +1232,7 @@ function init(){
     }
     function Weapon(){
         this.bullet = function (position, direction, t){
-            var vset = 1000, tset = 10000;
+            var vset = 3000, tset = 10000;
             var geometry = new THREE.CylinderGeometry(1, 5, 10, 30);
             var material = new THREE.MeshLambertMaterial({
                 color: 0xc0c0c0
@@ -1243,7 +1243,7 @@ function init(){
             bullet_new.name = 'bullet';
             //生成bullet图像，并初始化位置
 
-            var body = genDamageObject(bullet_new.uid, bullet_new.name, 114, position, "ball");
+            var body = genDamageObject(bullet_new.uid, bullet_new.name, 100, position, "ball");
 
             var dir_camera = new THREE.Quaternion();
             camera[0].getWorldQuaternion(dir_camera);
@@ -1292,7 +1292,7 @@ function init(){
             mesh.name = "rocket";
             rocket.push(mesh);
 
-            var body = genDamageObject(mesh.uid, mesh.name, 514, mesh.position, "box");
+            var body = genDamageObject(mesh.uid, mesh.name, 500, mesh.position, "box");
             body.aimid = aimid;
             //console.log(body.position);
             rocketPhysic.push(body);
@@ -1372,7 +1372,7 @@ function init(){
             var body = new CANNON.Body({ //创建一个刚体（物理世界的刚体数据）
                 mass: mass, //刚体的质量，这里单位为kg
                 position: new CANNON.Vec3(pos.x, pos.y, pos.z), //刚体的位置，单位是米
-                shape: new CANNON.Box(new CANNON.Vec3(25, 25, 25)), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
+                shape: new CANNON.Box(new CANNON.Vec3(100, 100, 100)), //刚体的形状（这里是立方体，立方体的参数是一个包含半长、半宽、半高的三维向量，具体我们以后会说）
                 material: new CANNON.Material({friction: 0.01, restitution: 0}) //材质数据，里面规定了摩擦系数和弹性系数
             });
 
@@ -1407,7 +1407,7 @@ function init(){
             }
             deletObject(event.body, true);
         }
-        if(event.target.hitpoint < 0){
+        if(event.target.hitpoint <= 0){
             deletObject(event.target, true);
 
         }
