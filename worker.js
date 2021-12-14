@@ -1,6 +1,6 @@
 const url = 'http://127.0.0.1:8000/player/'
 var data = undefined, result = true, dateTime = new Date(), trainFlag = false, initialStep = true, doneFlag = false;
-const stepTime = 200;
+const stepTime = 50;
 
 self.onmessage = function (event){
     if(event.data === 'Start train / End train'){

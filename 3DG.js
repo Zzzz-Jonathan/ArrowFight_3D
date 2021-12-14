@@ -5,8 +5,8 @@ import {TrainingModel} from "./trainingModel.js";
 init();
 
 function init(){
-    var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], mouseCode = [], EnergyMax = 400, mouseClickTime = 0, loading = true, crystalNum = 5, vOfPlayer = [200,130,60], aOfPlayer = [10,5,5], catchedtime = +new Date(), rayDist = 3000;//
-    var trainingModel = false, autoAction = [], gameTime = 180000;
+    var mapSize = [5000,5000,5000], cameraSize = 20000, keyCode = [], mouseCode = [], EnergyMax = 400, mouseClickTime = 0, loading = true, crystalNum = 1, vOfPlayer = [200,130,60], aOfPlayer = [10,5,5], catchedtime = +new Date(), rayDist = 3000;//
+    var trainingModel = false, autoAction = [], gameTime = 30000;
     var scene = [], destination = [], camera = [], renderer = [], phyWorld = [], destinationPhysic = [], timeCloud = [], timeCloudMap = [], player = [], playerPhysic = [], rocket = [], rocketPhysic = [], bullet = [], bulletPhysic = [], toxicPhysic = [];
     var crystal = [], crystalPhysic = [];
     var playerModule = [], cloudModules = [], texture = [], blackholeModules = [];
@@ -1900,7 +1900,7 @@ function init(){
         env.fresh();
         engine = new Engine(camera[0],playerPhysic[0]);
         playerOption  = new Player(player[0], camera[0], playerPhysic[0]);
-        state = new State(crystalPhysic, playerPhysic[0], camera[0], gameTime);
+        state = new State(crystalPhysic, playerPhysic[0], camera[0], gameTime, move, scene[0]);
 
         //engine.init();
         //console.log(player[0])
@@ -1939,6 +1939,9 @@ function init(){
     toServe.onmessage = function (event) {
         if(event.data === 'Done has send!'){
             env.fresh();
+            for(var i = 0; i < crystalNum; i++){
+                crystalPhysic[i].hitpoint = 1000;
+            }
             state.resetMsg();
             playerOption.reset();
         }

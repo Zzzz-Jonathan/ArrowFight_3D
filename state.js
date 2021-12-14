@@ -1,5 +1,5 @@
 class State {
-    constructor(enemy, player, camera, gameTime){
+    constructor(enemy, player, camera, gameTime, move, scene){
         this.player = player;
         this.camera = camera;
         this.enemylist = enemy;
@@ -7,8 +7,8 @@ class State {
         this.eHP = [];
         this.eID = [];
         for(var i = 0; i < this.enemylist.length; i++){
-            this.eHP.push(this.enemylist[i].hitpoint);
-            this.eID.push(this.enemylist[i].id);
+            this.eHP[i] = this.enemylist[i].hitpoint;
+            this.eID[i] = this.enemylist[i].id;
         }
         this.enemyNum = enemy.length;
         this.reward = 0;
@@ -16,10 +16,18 @@ class State {
         this.time = undefined;
         this.reset = undefined;
         this.gameTime = gameTime;
+        this.move = move;
+        this.canSee = false;
+        this.scene = scene;
     }
     rewardCalc(enemy){
+        // if(enemy !== undefined){
+        //     console.log(this.eHP, enemy.hitpoint);
+        // }
+
         if(this.enemylist.length < this.enemyNum){
             this.reward += 10*(this.enemyNum - this.enemylist.length);
+            this.showReward += 10*(this.enemyNum - this.enemylist.length);
             this.enemyNum = this.enemylist.length;
         }
         else{
@@ -33,6 +41,24 @@ class State {
                 this.eHP[aim] = enemy.hitpoint;
             }
         }
+        var dir = this.move.dirToAimRelative(this.camera, this.scene, enemy);
+        var deg = (Math.sqrt(dir.x*dir.x + dir.y*dir.y)/Math.abs(dir.z));
+        if(dir.z < 0 && deg < Math.tan(Math.PI/72)){
+            if(!this.canSee){
+                this.canSee = true;
+                this.reward += 1;
+                this.showReward += 1;
+            }
+            //console.log("Can see!");
+        }
+        else {
+            if(this.canSee){
+                this.canSee = false;
+                this.reward -= 1;
+                this.showReward -= 1;
+            }
+            //console.log("Can't see!");
+        }
     }
     clearReward(){
         this.reward = 0;
@@ -41,11 +67,17 @@ class State {
         this.reset = true;
         this.time = new Date();
         this.showReward = 0;
+        this.enemyNum = this.enemylist.length;
+        for(var i = 0; i < this.enemylist.length; i++){
+            this.eHP[i] = this.enemylist[i].hitpoint;
+        }
     }
     selectEnemy(){
         let min = 9999, aim = 0;
         let px = this.player.position.x, py = this.player.position.y, pz = this.player.position.z;
+
         for(var i = 0; i < this.enemylist.length; i++){
+            this.eID[i] = this.enemylist[i].id;
             let pos = this.enemylist[i].position;
             let dist = (pos.x - px)*(pos.x - px) + (pos.y - py)*(pos.y - py) + (pos.z - pz)*(pos.z - pz);
             if(Math.sqrt(dist) < min){
@@ -56,10 +88,19 @@ class State {
         return this.enemylist[aim];
     }
     inf(player, enemy, camera, reward, done){
-        var positionP = player.position, velocityP = player.velocity, rotationP = camera.rotation;
-        var positionE = enemy.position, velocityE = enemy.velocity;
-        var hitPointE = enemy.hitpoint;
-        var playerId = player.id;
+        if(this.enemyNum === 0){
+            var vec = new THREE.Vector3(0,0,0);
+            var positionP = vec, velocityP = vec, rotationP = vec;
+            var positionE = vec, velocityE = vec;
+            var hitPointE = 0;
+            var playerId = player.id;
+        }
+        else {
+            var positionP = player.position, velocityP = player.velocity, rotationP = camera.rotation;
+            var positionE = enemy.position, velocityE = enemy.velocity;
+            var hitPointE = enemy.hitpoint;
+            var playerId = player.id;
+        }
 
         //var json = [];
         var row = {};
@@ -119,9 +160,11 @@ class State {
     }
     step(){
         let done;
-        this.enemy = this.selectEnemy();
-        this.rewardCalc(this.enemy);
-        done = this.enemyNum === 0 || (new Date() - this.time) > this.gameTime;
+        if(this.enemyNum !== 0){
+            this.enemy = this.selectEnemy();
+            this.rewardCalc(this.enemy);
+        }
+        done =  this.enemyNum === 0 || (new Date() - this.time) > this.gameTime;
         //console.log(new Date() - this.time)
         return this.inf(this.player, this.enemy, this.camera, this.reward, done);
     }
