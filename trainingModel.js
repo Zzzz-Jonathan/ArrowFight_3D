@@ -22,7 +22,7 @@ class TrainingModel {
         //console.log(action, typeof (action))
         action = (parseInt(action)).toString(5);
         let len = action.length
-        for(var i = 0; i < 3 - len; i++) {
+        for(var i = 0; i < 2 - len; i++) {
             action = '0' + action;
         }
         //console.log(action, typeof (action))
@@ -30,7 +30,7 @@ class TrainingModel {
 
         actions.push(parseInt(action[0]));
         actions.push(parseInt(action[1]));
-        actions.push(parseInt(action[2]));
+        //actions.push(parseInt(action[2]));
 
         return actions;
     }
@@ -42,33 +42,33 @@ class TrainingModel {
             mouseCode[0] = true;
         }
 
-        if(autoAction[1] === 0){
-            keyCode[87] = keyCode[83] = keyCode[65] = keyCode[68] = false;
-        }
-        else if(autoAction[1] === 1){
-            keyCode[87] = true;
-            keyCode[83] = keyCode[65] = keyCode[68] = false;
-        }
-        else if(autoAction[1] === 2){
-            keyCode[83] = true;
-            keyCode[87] = keyCode[65] = keyCode[68] = false;
-        }
-        else if(autoAction[1] === 3){
-            keyCode[65] = true;
-            keyCode[87] = keyCode[83] = keyCode[68] = false;
-        }
-        else if(autoAction[1] === 4){
-            keyCode[68] = true;
-            keyCode[87] = keyCode[83] = keyCode[65] = false;
-        }
+        // if(autoAction[1] === 0){
+        //     keyCode[87] = keyCode[83] = keyCode[65] = keyCode[68] = false;
+        // }
+        // else if(autoAction[1] === 1){
+        //     keyCode[87] = true;
+        //     keyCode[83] = keyCode[65] = keyCode[68] = false;
+        // }
+        // else if(autoAction[1] === 2){
+        //     keyCode[83] = true;
+        //     keyCode[87] = keyCode[65] = keyCode[68] = false;
+        // }
+        // else if(autoAction[1] === 3){
+        //     keyCode[65] = true;
+        //     keyCode[87] = keyCode[83] = keyCode[68] = false;
+        // }
+        // else if(autoAction[1] === 4){
+        //     keyCode[68] = true;
+        //     keyCode[87] = keyCode[83] = keyCode[65] = false;
+        // }
     }
     actionToMouse (autoAction){
         var cry = 0, crx = 0;
-        if(autoAction[2] === 0){cry = crx = 0;}
-        else if(autoAction[2] === 1){cry = 0; crx = 0.02;}
-        else if(autoAction[2] === 2){cry = 0; crx = -0.02;}
-        else if(autoAction[2] === 3){cry = 0.02; crx = 0;}
-        else if(autoAction[2] === 4){cry = -0.02; crx = 0;}
+        if(autoAction[1] === 0){cry = crx = 0;}
+        else if(autoAction[1] === 1){cry = 0; crx = 0.02;}
+        else if(autoAction[1] === 2){cry = 0; crx = -0.02;}
+        else if(autoAction[1] === 3){cry = 0.02; crx = 0;}
+        else if(autoAction[1] === 4){cry = -0.02; crx = 0;}
 
         return [cry, crx];
     }

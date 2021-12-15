@@ -19,6 +19,9 @@ class State {
         this.move = move;
         this.canSee = false;
         this.scene = scene;
+        this.theta = 0;
+        this.phi = 0;
+        this.dist = 0;
     }
     rewardCalc(enemy){
         // if(enemy !== undefined){
@@ -43,6 +46,10 @@ class State {
         }
         var dir = this.move.dirToAimRelative(this.camera, this.scene, enemy);
         var deg = (Math.sqrt(dir.x*dir.x + dir.y*dir.y)/Math.abs(dir.z));
+
+        this.theta = Math.atan(Math.sqrt(dir.x*dir.x + dir.y*dir.y)/dir.z);
+        this.phi = Math.atan(dir.x/dir.y);
+
         if(dir.z < 0 && deg < Math.tan(Math.PI/72)){
             if(!this.canSee){
                 this.canSee = true;
@@ -80,6 +87,7 @@ class State {
             this.eID[i] = this.enemylist[i].id;
             let pos = this.enemylist[i].position;
             let dist = (pos.x - px)*(pos.x - px) + (pos.y - py)*(pos.y - py) + (pos.z - pz)*(pos.z - pz);
+            this.dist = Math.sqrt(dist);
             if(Math.sqrt(dist) < min){
                 min = Math.sqrt(dist);
                 aim = i;
@@ -88,22 +96,22 @@ class State {
         return this.enemylist[aim];
     }
     inf(player, enemy, camera, reward, done){
-        if(this.enemyNum === 0){
-            var vec = new THREE.Vector3(0,0,0);
-            var positionP = vec, velocityP = vec, rotationP = vec;
-            var positionE = vec, velocityE = vec;
-            var hitPointE = 0;
-            var playerId = player.id;
-        }
-        else {
-            var positionP = player.position, velocityP = player.velocity, rotationP = camera.rotation;
-            var positionE = enemy.position, velocityE = enemy.velocity;
-            var hitPointE = enemy.hitpoint;
-            var playerId = player.id;
-        }
+        // if(this.enemyNum === 0){
+        //     var vec = new THREE.Vector3(0,0,0);
+        //     var positionP = vec, velocityP = vec, rotationP = vec;
+        //     var positionE = vec, velocityE = vec;
+        //     var hitPointE = 0;
+        // }
+        // else {
+        //     // var positionP = player.position, velocityP = player.velocity, rotationP = camera.rotation;
+        //     // var positionE = enemy.position, velocityE = enemy.velocity;
+        //     // var hitPointE = enemy.hitpoint;
+        //     var theta = this.theta
+        // }
 
         //var json = [];
         var row = {};
+        var playerId = player.id;
 
         if(this.reset){
             row.type = 'reset';
@@ -116,41 +124,45 @@ class State {
 
         row.playerId = playerId;//id
 
-        var rowPP = {};//state
-        rowPP.x = positionP.x;
-        rowPP.y = positionP.y;
-        rowPP.z = positionP.z;
-        row.position = rowPP;
+        // var rowPP = {};//state
+        // rowPP.x = positionP.x;
+        // rowPP.y = positionP.y;
+        // rowPP.z = positionP.z;
+        // row.position = rowPP;
+        //
+        // var rowPV = {};
+        // rowPV.x = velocityP.x;
+        // rowPV.y = velocityP.y;
+        // rowPV.z = velocityP.z;
+        // row.velocity = rowPV;
+        //
+        // var rowPR = {};
+        // rowPR.x = rotationP.x;
+        // rowPR.y = rotationP.y;
+        // rowPR.z = rotationP.z;
+        // row.rotation = rowPR;
+        //
+        // var rowERP = {};
+        // rowERP.x = positionP.x - positionE.x;
+        // rowERP.y = positionP.y - positionE.y;
+        // rowERP.z = positionP.z - positionE.z;
+        // row.enemyRelativePosition = rowERP;
+        //
+        // var rowEV = {};
+        // rowEV.x = velocityE.x;
+        // rowEV.y = velocityE.y;
+        // rowEV.z = velocityE.z;
+        // row.enemyVelocity = rowEV;
+        //
+        // //row.hitpointP = hitpointP;
+        //
+        // row.hitPointE = hitPointE;
+        //
+        // row.energy = player.energy;
+        row.theta = this.theta;
+        row.phi = this.phi;
+        row.dist = this.dist;
 
-        var rowPV = {};
-        rowPV.x = velocityP.x;
-        rowPV.y = velocityP.y;
-        rowPV.z = velocityP.z;
-        row.velocity = rowPV;
-
-        var rowPR = {};
-        rowPR.x = rotationP.x;
-        rowPR.y = rotationP.y;
-        rowPR.z = rotationP.z;
-        row.rotation = rowPR;
-
-        var rowERP = {};
-        rowERP.x = positionP.x - positionE.x;
-        rowERP.y = positionP.y - positionE.y;
-        rowERP.z = positionP.z - positionE.z;
-        row.enemyRelativePosition = rowERP;
-
-        var rowEV = {};
-        rowEV.x = velocityE.x;
-        rowEV.y = velocityE.y;
-        rowEV.z = velocityE.z;
-        row.enemyVelocity = rowEV;
-
-        //row.hitpointP = hitpointP;
-
-        row.hitPointE = hitPointE;
-
-        row.energy = player.energy;
         row.reward = reward;
         row.done = done;
 
